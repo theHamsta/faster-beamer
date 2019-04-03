@@ -1,0 +1,7 @@
+[package]
+name = "faster-beamer"
+version = "0.1.0"
+authors = ["Stephan Seitz <stephan.seitz@fau.de>"]
+edition = "2018"
+
+[dependencies]

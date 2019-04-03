@@ -1,0 +1,3 @@
+[submodule "tree-sitter-latex"]
+	path = tree-sitter-latex
+	url = https://github.com/yitzchak/tree-sitter-latex.git
