@@ -8,15 +8,22 @@ extern crate cc;
 fn main() {
 
     cc::Build::new()
+        .include("tree-sitter-latex/src")
         .file("tree-sitter-latex/src/parser.c")
-        .include("tree-sitter-cpp/src")
         .flag_if_supported("-w") // disable warnings
-        .compile("tree-sitter-cpp");
+        .compile("tree-sitter-latex");
 
     cc::Build::new()
         .file("tree-sitter-latex/src/scanner.cc")
-        .cpp(true)
+        .file("tree-sitter-latex/src/catcode.cc")
+        .file("tree-sitter-latex/src/scanner_control_sequences.cc")
+        .file("tree-sitter-latex/src/scanner_environments.cc")
+        .file("tree-sitter-latex/src/scanner_keywords.cc")
+        .file("tree-sitter-latex/src/scanner_names.cc")
+        //.file("tree-sitter-latex/src/scanner.cc")
         .flag_if_supported("-w") // disable warnings
-        .include("tree-sitter-cpp/src")
-        .compile("tree-sitter-cpp-scanner");
+        .cpp(true)
+        .include("tree-sitter-latex/src")
+        .include("tree-sitter-latex/src/tree_sitter")
+        .compile("tree-sitter-latex-scanner");
 }
