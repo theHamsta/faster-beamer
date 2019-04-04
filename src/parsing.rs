@@ -108,61 +108,61 @@ mod tests {
     use super::*;
     use std::path::Path;
 
-    #[test]
-    fn get_node_types() {
-        let test_file = Path::new(file!())
-            .parent()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .join("test/test_files/simple_tera_template.cpp");
-        let parsed_file = ParsedFile::new(test_file.to_string_lossy().into_owned());
-        let node_types = vec![
-            "comment",
-            "declaration",
-            "class_specifier",
-            "call_expression",
-            "function_definition",
-            "field_declaration",
-            "ERROR",
-        ];
-        for t in node_types {
-            let comments = parsed_file.get_nodes_of_type(t.to_string());
-            println!("");
-            println!("Found {} {}s:", comments.len(), t);
-            for c in comments {
-                let text = &parsed_file.file_content[c.start_byte()..c.end_byte()];
-                println!("{}", text);
-            }
-        }
-    }
+    //#[test]
+    //fn get_node_types() {
+        //let test_file = Path::new(file!())
+            //.parent()
+            //.unwrap()
+            //.parent()
+            //.unwrap()
+            //.join("test/test_files/simple_tera_template.cpp");
+        //let parsed_file = ParsedFile::new(test_file.to_string_lossy().into_owned());
+        //let node_types = vec![
+            //"comment",
+            //"declaration",
+            //"class_specifier",
+            //"call_expression",
+            //"function_definition",
+            //"field_declaration",
+            //"ERROR",
+        //];
+        //for t in node_types {
+            //let comments = parsed_file.get_nodes_of_type(t.to_string());
+            //println!("");
+            //println!("Found {} {}s:", comments.len(), t);
+            //for c in comments {
+                //let text = &parsed_file.file_content[c.start_byte()..c.end_byte()];
+                //println!("{}", text);
+            //}
+        //}
+    //}
 
-    #[test]
-    fn print_all_nodes() {
-        let test_file = Path::new(file!())
-            .parent()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .join("test/test_files/simple_tera_template.cpp");
-        let parsed_file = ParsedFile::new(test_file.to_string_lossy().into_owned());
+    //#[test]
+    //fn print_all_nodes() {
+        //let test_file = Path::new(file!())
+            //.parent()
+            //.unwrap()
+            //.parent()
+            //.unwrap()
+            //.join("test/test_files/simple_tera_template.cpp");
+        //let parsed_file = ParsedFile::new(test_file.to_string_lossy().into_owned());
 
-        let root_node = parsed_file.syntax_tree.root_node();
-        let mut stack = vec![root_node];
+        //let root_node = parsed_file.syntax_tree.root_node();
+        //let mut stack = vec![root_node];
 
-        while !stack.is_empty() {
-            let current_node = stack.pop().unwrap();
-            println!(
-                "\n{}:\n\t {}",
-                current_node.kind(),
-                parsed_file.get_node_string(&current_node)
-            );
+        //while !stack.is_empty() {
+            //let current_node = stack.pop().unwrap();
+            //println!(
+                //"\n{}:\n\t {}",
+                //current_node.kind(),
+                //parsed_file.get_node_string(&current_node)
+            //);
 
-            for i in (0..current_node.named_child_count()).rev() {
-                stack.push(current_node.named_child(i).unwrap());
-            }
-        }
-    }
+            //for i in (0..current_node.named_child_count()).rev() {
+                //stack.push(current_node.named_child(i).unwrap());
+            //}
+        //}
+    //}
 
     #[test]
     fn print_nodes_of_language() {
