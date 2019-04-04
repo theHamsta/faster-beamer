@@ -12,7 +12,6 @@ extern "C" {
     fn tree_sitter_latex() -> Language;
 }
 
-
 pub struct ParsedFile {
     pub filename: String,
     pub file_content: String,
@@ -110,49 +109,6 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn parse_lang_c() {
-        let source_code = r#" 
-#include <iostream>
-
-int main() 
-{
-std::cout << "Hello, World!";
-return 0;
-}
-    "#;
-        ParsedFile::from_string("main.c".to_string(), source_code.to_string());
-    }
-
-    #[test]
-    fn parse_lang_cpp() {
-        let source_code = r#" 
-#include <iostream>
-
-
-
-int main() 
-{
-std::cout << "Hello, World!";
-return 0;
-}
-    "#;
-        ParsedFile::from_string("main.cpp".to_string(), source_code.to_string());
-    }
-
-    #[test]
-    fn parse_file() {
-        let project_root = Path::new(file!()).parent().unwrap().parent().unwrap();
-        let test_file1 = project_root.join("test/test_files/Block.cpp");
-        let test_file2 = project_root.join("test/test_files/simple_tera_template.cpp");
-
-        let files = vec![test_file1, test_file2];
-        for f in files {
-            let parsed_file = ParsedFile::new(f.to_string_lossy().into_owned());
-            println!("{}", parsed_file.syntax_tree.root_node().to_sexp());
-        }
-    }
-
-    #[test]
     fn get_node_types() {
         let test_file = Path::new(file!())
             .parent()
@@ -218,115 +174,4 @@ return 0;
             }
         }
     }
-
-    #[test]
-    fn test_get_node_from_text() {
-        let source_code = r#" 
-#include <iostream>
-
-int main() 
-{
-std::cout << "Hello, World!" << std::endl;
-return 0;
-}
-    "#;
-        let parsed = ParsedFile::from_string("main.c".to_string(), source_code.to_string());
-        let nodes = parsed.get_nodes_from_source_text("std", false);
-        assert_eq!(2, nodes.len());
-        let nodes = parsed.get_nodes_from_source_text("std", true);
-        assert_eq!(1, nodes.len());
-        let nodes = parsed.get_nodes_from_source_text("st", false);
-        assert_eq!(0, nodes.len());
-        let nodes = parsed.get_nodes_from_source_text("main", false);
-        assert_eq!(1, nodes.len());
-    }
-
-    use crate::tree_traversal::{get_children, get_scope_nodes};
-
-    #[test]
-    fn test_get_scope_nodes() {
-        let source_code = r#" 
-#include <iostream>
-
-int main() 
-{
-    int y = 1;
-    Foo z = 1;
-std::cout << "Hello, World!";
-    int x = 1;
-return 0;
-}
-    "#;
-        let parsed = ParsedFile::from_string("main.c".to_string(), source_code.to_string());
-        let nodes = parsed.get_nodes_from_source_text("cout", false);
-        assert_eq!(1, nodes.len());
-        let scope_nodes = get_scope_nodes(nodes[0], &|_| true, false);
-        println!("Scope nodes: ");
-        for s in scope_nodes {
-            println!("{} ({})", parsed.get_node_string(&s), s.kind());
-        }
-        let declarations_in_scope =
-            get_scope_nodes(nodes[0], &|n| n.kind() == "declaration", false);
-        assert_eq!(2, declarations_in_scope.len());
-        assert_eq!(
-            "Foo z = 1;",
-            parsed.get_node_string(&declarations_in_scope[0])
-        );
-        assert_eq!(
-            "int y = 1;",
-            parsed.get_node_string(&declarations_in_scope[1])
-        );
-        let declared_variable = get_children(
-            declarations_in_scope[0],
-            &|n| n.kind() == "identifier",
-            true,
-        )[0];
-        assert_eq!(parsed.get_node_string(&declared_variable), "z");
-        let declared_variable_type = get_children(
-            declarations_in_scope[0],
-            &|n| n.kind() == "primitive_type" || n.kind() == "type_identifier",
-            true,
-        )[0];
-        assert_eq!(parsed.get_node_string(&declared_variable_type), "Foo");
-        let declared_variable_type = get_children(
-            declarations_in_scope[1],
-            &|n| n.kind() == "primitive_type" || n.kind() == "type_identifier",
-            true,
-        )[0];
-        assert_eq!(parsed.get_node_string(&declared_variable_type), "int");
-        let declared_variable = get_children(
-            declarations_in_scope[1],
-            &|n| n.kind() == "identifier",
-            true,
-        )[0];
-        assert_eq!(parsed.get_node_string(&declared_variable), "y");
-
-        let declaration_nodes = get_children(declarations_in_scope[0], &|_| true, false);
-        for n in declaration_nodes {
-            println!("{} ({})", parsed.get_node_string(&n), n.kind());
-        }
-        //let declared_variable = get_children(
-        //declarations_in_scope[0],
-        //&|n| n.kind() == "primit",
-        //true,
-        //)[0];
-    }
-
-    //#[test]
-    //#[cfg(unix)]
-    //fn write_dot_graph() {
-    //let project_root = Path::new(file!()).parent().unwrap().parent().unwrap();
-    //let test_file = project_root
-    //.join("test/test_files/simple_tera_template.cpp")
-    //.to_string_lossy()
-    //.into_owned();
-    //let dot_file = project_root
-    //.join("test/simple_tera_template.dot")
-    //.to_string_lossy()
-    //.into_owned();
-    //let parsed_file = ParsedFile::new(test_file);
-    //parsed_file
-    //.write_dot_graph(&dot_file.as_str())
-    //.expect("Failed to write file");
-    //}
 }
