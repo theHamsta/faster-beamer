@@ -10,6 +10,7 @@ extern crate log;
 extern crate pretty_env_logger;
 extern crate tectonic;
 extern crate latexcompile;
+#[macro_use]
 extern crate lopdf;
 
 mod parsing;
