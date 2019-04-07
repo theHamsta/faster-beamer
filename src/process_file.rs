@@ -11,8 +11,6 @@ use latexcompile::{LatexCompiler, LatexError, LatexInput};
 use lopdf::Document;
 use std::collections::HashMap;
 use std::fs::write;
-use std::io::prelude::*;
-use std::io::BufReader;
 use std::path::Path;
 use tectonic;
 use tree_sitter::Node;
@@ -43,6 +41,27 @@ pub fn process_file(input_file: &str, _app: &ArgMatches) {
     let pages = document.get_pages();
     println!("{} pages", pages.iter().len());
     // copy the file into the working directory
+
+    let mut output_document = document.clone();
+    for p in pages.iter() {
+        //let object = document.get_object(*p.1).unwrap();
+        output_document.add_object(*p.1);
+    }
+
+    if let Some(page_tree_id) = document
+        .catalog()
+        .and_then(|cat| cat.get(b"Pages"))
+        .and_then(|pages| pages.as_reference())
+    {
+        if let Some(kids) = document
+            .get_dictionary(page_tree_id)
+            .and_then(|page_tree| page_tree.get(b"Kids"))
+        {}
+    }
+
+    output_document
+        .save(::std::env::current_dir().unwrap().join("foou.pdf"))
+        .expect("!");
     let output = ::std::env::current_dir().unwrap().join("out.pdf");
     assert!(write(output, result).is_ok());
 
