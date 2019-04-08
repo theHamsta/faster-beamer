@@ -6,6 +6,7 @@
 use crate::beamer::get_frames;
 use crate::parsing;
 use std::path::Path;
+use crate::tree_traversal;
 
 use log::Level::Trace;
 
@@ -52,6 +53,9 @@ pub fn process_file(input_file: &str, options: CliOptions) {
             }
         }
     }
+
+    let document_envs =
+        tree_traversal::get_children(parsed_file.syntax_tree.root_node(), &|n| n.kind() == "document_env", true);
 
     //let node_types = vec!["text_env", "group"];
     //for t in node_types {
