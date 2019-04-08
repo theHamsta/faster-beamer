@@ -106,7 +106,6 @@ impl ParsedFile {
 mod tests {
 
     use super::*;
-    use std::path::Path;
 
     //#[test]
     //fn get_node_types() {

@@ -30,6 +30,14 @@ fn has_begin_frame(node: Node, parsed_file: &ParsedFile) -> bool {
             .contains("{frame}")
 }
 
+//pub fn get_includegraphics(parsed_file: &ParsedFile) -> Vec<Node> {
+    //get_children(parsed_file.root_node,
+                 //&|n| {
+                     //let children = get_children(
+
+                 //,false
+//}
+
 #[cfg(test)]
 mod tests {
     use super::*;
