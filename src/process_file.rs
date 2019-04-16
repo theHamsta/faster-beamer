@@ -12,17 +12,16 @@ use crate::tree_traversal;
 use crate::tree_traversal::TraversalOrder;
 use cachedir::CacheDirConfig;
 use clap::ArgMatches;
-use latexcompile::{LatexCompiler, LatexError, LatexInput};
-use lopdf::Document;
+use latexcompile::{LatexCompiler, LatexInput};
+//use lopdf::Document;
 use md5;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fs::write;
-use std::fs::File;
-use std::io::prelude::*;
+//use std::fs::File;
+//use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use tectonic;
-use tree_sitter::Node;
+//use tree_sitter::Node;
 pub fn process_file(input_file: &str, matches: &ArgMatches) {
     let input_path = Path::new(&input_file);
     if !input_path.is_file() {

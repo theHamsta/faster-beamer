@@ -17,7 +17,7 @@ clap = "2.32.0"
 hotwatch = "0.3.1"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 pretty_env_logger = "0.3.0"
-tectonic = "0.1.11"
+#tectonic = "0.1.11"
 latexcompile = "0.1.0"
 lopdf = "0.20.0"
 cachedir = "0.1.1"
