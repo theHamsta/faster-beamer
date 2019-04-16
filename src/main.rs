@@ -4,7 +4,12 @@ extern crate serde_json;
 extern crate tera;
 //#[macro_use]
 extern crate clap;
-extern crate lazy_static;
+#[macro_use]
+extern crate log;
+extern crate pretty_env_logger;
+extern crate tectonic;
+extern crate latexcompile;
+extern crate lopdf;
 
 mod beamer;
 mod parsing;
@@ -18,6 +23,8 @@ extern crate log;
 extern crate pretty_env_logger;
 
 fn main() {
+    pretty_env_logger::init();
+
     let matches = App::new("faster-beamer")
         .version("1.0")
         .author("Stephan Seitz <stephan.seitz@fau.de>")
@@ -34,16 +41,15 @@ fn main() {
                 .required(true)
                 .index(1),
         )
+        .arg(
+            Arg::with_name("OUTPUT")
+                .help("Filename for output PDF")
+                .index(2),
+        )
         .get_matches();
 
     let is_server_mode = matches.is_present("server");
     let input_file = matches.value_of("INPUT").unwrap();
-
-    pretty_env_logger::init();
-
-    let options = process_file::CliOptions {
-        server: is_server_mode,
-    };
 
     if is_server_mode {
         use hotwatch::{Event, Hotwatch};
@@ -53,12 +59,12 @@ fn main() {
         hotwatch
             .watch(input_file, move |event: Event| {
                 if let Event::Write(_) = event {
-                    debug!("Input file has changed.");
+                    info!("Input file has changed.");
                     let input_file = matches.value_of("INPUT").unwrap();
                     process_file::process_file(input_file, options);
                 }
                 if let Event::Remove(_) = event {
-                    debug!("Input file deleted!");
+                    info!("Input file deleted!");
                     process::exit(0);
                 }
             })
@@ -70,6 +76,6 @@ fn main() {
             thread::sleep(time::Duration::from_millis(100));
         }
     } else {
-        process_file::process_file(input_file, options);
+        process_file::process_file(input_file, &matches);
     }
 }

@@ -4,7 +4,7 @@
 // Distributed under terms of the MIT license.
 //
 
-use crate::tree_traversal::{get_children, get_nodes_of_type};
+use crate::tree_traversal::{get_children, get_nodes_of_type, TraversalOrder};
 use std::fs;
 use tree_sitter::{InputEdit, Language, Node, Parser};
 
@@ -66,6 +66,7 @@ impl ParsedFile {
             self.syntax_tree.root_node(),
             &|n: Node| self.get_node_string(&n) == source_text,
             return_first_only,
+            TraversalOrder::DepthFirst,
         )
     }
     pub fn get_child_nodes_from_source_text<'a>(
@@ -78,6 +79,7 @@ impl ParsedFile {
             root_node,
             &|n: Node| self.get_node_string(&n) == source_text,
             return_first_only,
+            TraversalOrder::DepthFirst
         )
     }
 
