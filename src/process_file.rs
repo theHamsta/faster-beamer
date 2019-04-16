@@ -87,7 +87,6 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
         .unwrap()
     };
     debug!("{}", &preamble);
-    
 
     //let latex = parsed_file.file_content;
     //let pdf_data: Vec<u8> = tectonic::latex_to_pdf(latex).expect("processing failed");
@@ -98,19 +97,48 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
         .unwrap()
         .into();
 
-    //let hash = md5::compute(&preamble);
+    let latex_input = LatexInput::from(input_path.parent().unwrap().to_str().unwrap());
+    let hash = md5::compute(&preamble);
+    //let dict = HashMap::new();
+    //let compiler = LatexCompiler::new(dict).unwrap();
+    //let preamble_compiler = &compiler
+    //.with_args(&"-shell-escape")
+    //.add_arg("-ini")
+    //.add_arg("-jobname=\"foo\"")
+    //.add_arg("\"&pdflatex\"")
+    //.add_arg("mylatexformat.ltx");
+    //preamble_compiler
+    //.run(&input_file, &latex_input)
+    //.expect("Failed to compile preamble");
 
-    let input = LatexInput::from(input_path.parent().unwrap().to_str().unwrap());
+    if ::std::env::current_dir()
+        .unwrap()
+        .join(&format!("{:x}.pdf", hash))
+        .is_file()
+    {
+        info!("Precompiled preamble already exists");
+    } else {
+        let output = Command::new("pdflatex")
+            .arg("-shell-escape")
+            .arg("-ini")
+            .arg(format!("-jobname=\"{:x}\"", hash))
+            .arg("\"&pdflatex\"")
+            .arg("mylatexformat.ltx")
+            .arg(&input_file)
+            .output()
+            .expect("Failed to compile preamble");
+        eprint!("{}", String::from_utf8_lossy(&output.stdout));
+        eprint!("{}", String::from_utf8_lossy(&output.stderr));
+    }
+
     let mut generated_documents = HashMap::new();
-    let mut dict = HashMap::new();
-    dict.insert("test".into(), "Minimal".into());
-    let compiler = LatexCompiler::new(dict).unwrap();
     let mut command = &mut Command::new("pdfunite");
     for f in frames {
         //// provide the folder where the file for latex compiler are found
         //// create a new clean compiler enviroment and the compiler wrapper
         //// run the underlying pdflatex or whatever
-        let compile_string = preamble.to_owned()
+        let compile_string = format!("%&{:x}\n", hash)
+            + &preamble
             + "\n\\begin{document}\n"
             + parsed_file.get_node_string(&f)
             + "\n\\end{document}\n";
@@ -132,7 +160,11 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
         } else {
             let temp_file = cachedir.join(format!("{:x}.tex", hash));
             assert!(write(&temp_file, &compile_string).is_ok());
-            let result = compiler.run(&temp_file.to_string_lossy(), &input).unwrap();
+            let dict = HashMap::new();
+            let compiler = LatexCompiler::new(dict).unwrap();
+            let result = compiler
+                .run(&temp_file.to_string_lossy(), &latex_input)
+                .unwrap();
             assert!(write(&output, &result).is_ok());
             //result
         };
