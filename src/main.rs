@@ -6,10 +6,10 @@ extern crate tera;
 extern crate clap;
 #[macro_use]
 extern crate log;
-extern crate pretty_env_logger;
-extern crate tectonic;
 extern crate latexcompile;
 extern crate lopdf;
+extern crate pretty_env_logger;
+extern crate tectonic;
 
 mod beamer;
 mod parsing;
@@ -18,9 +18,6 @@ mod tree_traversal;
 
 use clap::{App, Arg};
 use std::{process, thread, time};
-#[macro_use]
-extern crate log;
-extern crate pretty_env_logger;
 
 fn main() {
     pretty_env_logger::init();
@@ -61,7 +58,7 @@ fn main() {
                 if let Event::Write(_) = event {
                     info!("Input file has changed.");
                     let input_file = matches.value_of("INPUT").unwrap();
-                    process_file::process_file(input_file, options);
+                    process_file::process_file(input_file, &matches);
                 }
                 if let Event::Remove(_) = event {
                     info!("Input file deleted!");

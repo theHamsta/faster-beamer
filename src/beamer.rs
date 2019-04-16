@@ -5,7 +5,7 @@
 //
 
 use crate::parsing::ParsedFile;
-use crate::tree_traversal::get_children;
+use crate::tree_traversal::{get_children, TraversalOrder};
 use tree_sitter::Node;
 
 pub fn get_frames(parsed_file: &ParsedFile) -> Vec<Node> {
@@ -14,7 +14,7 @@ pub fn get_frames(parsed_file: &ParsedFile) -> Vec<Node> {
     let text_envs = parsed_file.get_nodes_of_type("text_env".to_string());
 
     for t in text_envs {
-        let children = get_children(t, &|n| has_begin_frame(n, parsed_file), true);
+        let children = get_children(t, &|n| has_begin_frame(n, parsed_file), true, TraversalOrder::BreadthFirst);
         if children.len() == 1 {
             frames.push(t)
         }
