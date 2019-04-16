@@ -20,9 +20,10 @@ use std::fs::write;
 //use std::fs::File;
 //use std::io::prelude::*;
 use std::path::{Path, PathBuf};
-use std::thread;
 use std::process::Command;
 use rayon;
+use rayon::prelude::*;
+
 //use tree_sitter::Node;
 pub fn process_file(input_file: &str, matches: &ArgMatches) {
     let input_path = Path::new(&input_file);
@@ -150,7 +151,7 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
     }
 
 
-    for  (hash, tex_content) in generated_documents {
+    generated_documents.par_iter().for_each(|(hash, tex_content)| {
         let pdf =  cachedir.join(format!("{:x}.pdf", hash));
 
         if pdf.is_file() {
@@ -182,6 +183,7 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
             //result
         };
     }
+        );
 
         //command_args = command_args + " " + output.to_str().unwrap();
 
