@@ -3,6 +3,8 @@ name = "faster-beamer"
 version = "0.1.0"
 authors = ["Stephan Seitz <stephan.seitz@fau.de>"]
 edition = "2018"
+description = "An incremental compiler for LaTeX Beamer slides"
+license="GPLv3"
 
 [dependencies]
 tree-sitter = "0.3.7"
