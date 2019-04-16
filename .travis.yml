@@ -16,7 +16,7 @@ matrix:
 addons:
   apt:
     packages:
-      - build-essentials
+      - build-essential
       - libfontconfig1-dev
       - libgraphite2-dev
       - libharfbuzz-dev
