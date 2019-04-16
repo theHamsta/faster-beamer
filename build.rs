@@ -23,6 +23,7 @@ fn main() {
         //.file("tree-sitter-latex/src/scanner.cc")
         .flag_if_supported("-w") // disable warnings
         .cpp(true)
+        .flag_if_supported("-std=c++11") // disable warnings
         .include("tree-sitter-latex/src")
         .include("tree-sitter-latex/src/tree_sitter")
         .compile("tree-sitter-latex-scanner");
