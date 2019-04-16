@@ -10,6 +10,8 @@ extern crate latexcompile;
 extern crate lopdf;
 extern crate pretty_env_logger;
 extern crate tectonic;
+extern crate cachedir;
+extern crate md5;
 
 mod beamer;
 mod parsing;

@@ -15,11 +15,13 @@ serde = { version = "1.0", features = ["derive"] }
 lazy_static = "1.2.0"
 clap = "2.32.0"
 hotwatch = "0.3.1"
-log = "0.4"
+log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 pretty_env_logger = "0.3.0"
 tectonic = "0.1.11"
 latexcompile = "0.1.0"
 lopdf = "0.20.0"
+cachedir = "0.1.1"
+md5 = "0.6.1"
 
 [build-dependencies]
 cc = { version = "1.0", features = ["parallel"] }
