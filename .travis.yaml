@@ -1,19 +1,1 @@
 language: rust
-sudo: required
-cache: cargo
-script:
-  - cargo build --verbose --all
-  - cargo test --verbose --all
-rust:
-  - stable
-  - beta
-  - nightly
-matrix:
-  allow_failures:
-    - rust: nightly
-  fast_finish: true
-
-addons:
-  apt:
-    packages:
-      - build-essentials
