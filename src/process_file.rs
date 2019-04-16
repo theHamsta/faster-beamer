@@ -64,7 +64,7 @@ pub fn process_file(input_file: &str, _app: &ArgMatches) {
         parsed_file.syntax_tree.root_node(),
         &|n| n.kind() == "document_env",
         true,
-        TraversalOrder::BreadthFirst
+        TraversalOrder::BreadthFirst,
     );
     //let latex = parsed_file.file_content;
     //let pdf_data: Vec<u8> = tectonic::latex_to_pdf(latex).expect("processing failed");
