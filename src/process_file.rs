@@ -20,10 +20,10 @@ use std::fs::write;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use tectonic;
 use tree_sitter::Node;
-
-pub fn process_file(input_file: &str, _app: &ArgMatches) {
+pub fn process_file(input_file: &str, matches: &ArgMatches) {
     let input_path = Path::new(&input_file);
     if !input_path.is_file() {
         eprintln!("Could not open {}", input_file);
@@ -49,8 +49,8 @@ pub fn process_file(input_file: &str, _app: &ArgMatches) {
 
         while !stack.is_empty() {
             let current_node = stack.pop().unwrap();
-            if current_node.kind() != "ERROR" {
-                debug!(
+            if current_node.kind() == "ERROR" {
+                eprintln!(
                     "\n{}:\n\t {}",
                     current_node.kind(),
                     parsed_file.get_node_string(&current_node),
@@ -63,17 +63,31 @@ pub fn process_file(input_file: &str, _app: &ArgMatches) {
         }
     }
 
-    let document_envs = tree_traversal::get_children(
+    let document_env = tree_traversal::get_children(
         parsed_file.syntax_tree.root_node(),
         &|n| n.kind() == "document_env",
         true,
         TraversalOrder::BreadthFirst,
-    )[0];
-    debug!("Document body");
-    debug!("{}", parsed_file.get_node_string(&document_envs));
-    debug!("Preamble");
-    let preamble = &parsed_file.file_content[0..document_envs.start_byte()];
+    );
+    let preamble = if document_env.len() == 1 as usize {
+        debug!("Document body");
+        debug!("{}", parsed_file.get_node_string(&document_env[0]));
+        debug!("Preamble");
+        parsed_file.file_content[0..document_env[0].start_byte()].to_owned()
+    } else {
+        eprintln!(
+            "Could not find document enviroment with tree_sitter ({})",
+            input_file
+        );
+        let find = parsed_file.file_content.find("\\begin{document}");
+        match find {
+            Some(x) => Some(parsed_file.file_content[..x].to_owned()),
+            None => None,
+        }
+        .unwrap()
+    };
     debug!("{}", &preamble);
+    
 
     //let latex = parsed_file.file_content;
     //let pdf_data: Vec<u8> = tectonic::latex_to_pdf(latex).expect("processing failed");
@@ -84,11 +98,14 @@ pub fn process_file(input_file: &str, _app: &ArgMatches) {
         .unwrap()
         .into();
 
+    //let hash = md5::compute(&preamble);
+
     let input = LatexInput::from(input_path.parent().unwrap().to_str().unwrap());
     let mut generated_documents = HashMap::new();
     let mut dict = HashMap::new();
     dict.insert("test".into(), "Minimal".into());
     let compiler = LatexCompiler::new(dict).unwrap();
+    let mut command = &mut Command::new("pdfunite");
     for f in frames {
         //// provide the folder where the file for latex compiler are found
         //// create a new clean compiler enviroment and the compiler wrapper
@@ -104,29 +121,39 @@ pub fn process_file(input_file: &str, _app: &ArgMatches) {
 
         let output = cachedir.join(format!("{:x}.pdf", hash));
         let pdf_data = if output.is_file() {
-            let mut f = File::open(&output).unwrap();
-            let mut buffer = Vec::new();
-            // read the whole file
-            f.read_to_end(&mut buffer).expect(&format!(
-                "Failed to read file {}",
-                &output.to_str().unwrap_or("")
-            ));
-            buffer
+            //let mut f = File::open(&output).unwrap();
+            //let mut buffer = Vec::new();
+            //// read the whole file
+            //f.read_to_end(&mut buffer).expect(&format!(
+            //"Failed to read file {}",
+            //&output.to_str().unwrap_or("")
+            //));
+            //buffer
         } else {
             let temp_file = cachedir.join(format!("{:x}.tex", hash));
             assert!(write(&temp_file, &compile_string).is_ok());
             let result = compiler.run(&temp_file.to_string_lossy(), &input).unwrap();
             assert!(write(&output, &result).is_ok());
-            result
+            //result
         };
 
-        let document = Document::load_from(&pdf_data[..]).unwrap();
-        let pages = document.get_pages();
-        println!("{} pages", pages.iter().len());
+        //let document = Document::load_from(&pdf_data[..]).unwrap();
+        //let pages = document.get_pages();
+        //println!("{} pages", pages.iter().len());
         //// copy the file into the working directory
-        println!("{}", &output.to_string_lossy());
+        debug!("{}", &output.to_string_lossy());
         generated_documents.insert(hash, output.to_owned());
+        //command_args = command_args + " " + output.to_str().unwrap();
+        command = command.arg(output.to_str().unwrap());
     }
+
+    let output = command
+        .arg(matches.value_of("OUTPUT").unwrap_or("output.pdf"))
+        .output()
+        .expect("failed to execute process");
+
+    //println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    eprint!("{}", String::from_utf8_lossy(&output.stdout));
 
     //let root_node = parsed_file.syntax_tree.root_node();
     //let mut stack = vec![root_node];
