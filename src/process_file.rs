@@ -20,7 +20,9 @@ use std::fs::write;
 //use std::fs::File;
 //use std::io::prelude::*;
 use std::path::{Path, PathBuf};
+use std::thread;
 use std::process::Command;
+use rayon;
 //use tree_sitter::Node;
 pub fn process_file(input_file: &str, matches: &ArgMatches) {
     let input_path = Path::new(&input_file);
@@ -74,7 +76,7 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
         debug!("Preamble");
         parsed_file.file_content[0..document_env[0].start_byte()].to_owned()
     } else {
-        eprintln!(
+        warn!(
             "Could not find document enviroment with tree_sitter ({})",
             input_file
         );
@@ -96,23 +98,11 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
         .unwrap()
         .into();
 
-    let latex_input = LatexInput::from(input_path.parent().unwrap().to_str().unwrap());
-    let hash = md5::compute(&preamble);
-    //let dict = HashMap::new();
-    //let compiler = LatexCompiler::new(dict).unwrap();
-    //let preamble_compiler = &compiler
-    //.with_args(&"-shell-escape")
-    //.add_arg("-ini")
-    //.add_arg("-jobname=\"foo\"")
-    //.add_arg("\"&pdflatex\"")
-    //.add_arg("mylatexformat.ltx");
-    //preamble_compiler
-    //.run(&input_file, &latex_input)
-    //.expect("Failed to compile preamble");
+    let preamble_hash = md5::compute(&preamble);
 
     if ::std::env::current_dir()
         .unwrap()
-        .join(&format!("{:x}.pdf", hash))
+        .join(&format!("{:x}.pdf", preamble_hash))
         .is_file()
     {
         info!("Precompiled preamble already exists");
@@ -120,7 +110,7 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
         let output = Command::new("pdflatex")
             .arg("-shell-escape")
             .arg("-ini")
-            .arg(format!("-jobname=\"{:x}\"", hash))
+            .arg(format!("-jobname=\"{:x}\"", preamble_hash))
             .arg("\"&pdflatex\"")
             .arg("mylatexformat.ltx")
             .arg(&input_file)
@@ -130,13 +120,13 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
         eprint!("{}", String::from_utf8_lossy(&output.stderr));
     }
 
-    let mut generated_documents = HashMap::new();
+    let mut generated_documents = Vec::new();
     let mut command = &mut Command::new("pdfunite");
     for f in frames {
         //// provide the folder where the file for latex compiler are found
         //// create a new clean compiler enviroment and the compiler wrapper
         //// run the underlying pdflatex or whatever
-        let compile_string = format!("%&{:x}\n", hash)
+        let compile_string = format!("%&{:x}\n", preamble_hash)
             + &preamble
             + "\n\\begin{document}\n"
             + parsed_file.get_node_string(&f)
@@ -144,10 +134,26 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
         debug!("{}", compile_string);
         //let result: Vec<u8> = tectonic::latex_to_pdf(&compile_string).expect("processing failed");
         //println!("Output PDF size is {} bytes", result.len());
-        let hash = md5::compute(&compile_string);
 
+        let hash = md5::compute(&compile_string);
         let output = cachedir.join(format!("{:x}.pdf", hash));
-        let pdf_data = if output.is_file() {
+        generated_documents.push((hash, compile_string));
+       
+
+
+        //let document = Document::load_from(&pdf_data[..]).unwrap();
+        //let pages = document.get_pages();
+        //println!("{} pages", pages.iter().len());
+        //// copy the file into the working directory
+        debug!("{}", &output.to_string_lossy());
+        command = command.arg(output.to_str().unwrap());
+    }
+
+
+    for  (hash, tex_content) in generated_documents {
+        let pdf =  cachedir.join(format!("{:x}.pdf", hash));
+
+        if pdf.is_file() {
             //let mut f = File::open(&output).unwrap();
             //let mut buffer = Vec::new();
             //// read the whole file
@@ -158,25 +164,26 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
             //buffer
         } else {
             let temp_file = cachedir.join(format!("{:x}.tex", hash));
-            assert!(write(&temp_file, &compile_string).is_ok());
+            assert!(write(&temp_file, &tex_content).is_ok());
             let dict = HashMap::new();
             let compiler = LatexCompiler::new(dict).unwrap();
-            let result = compiler
-                .run(&temp_file.to_string_lossy(), &latex_input)
-                .unwrap();
-            assert!(write(&output, &result).is_ok());
+            let latex_input = LatexInput::from(input_path.parent().unwrap().to_str().unwrap());
+            let result = compiler.run(&temp_file.to_string_lossy(), &latex_input);
+            if result.is_ok() {
+                assert!(write(&pdf, &result.unwrap()).is_ok());
+            } else {
+                error!(
+                    "Failed to compile frame ({}):\n {}",
+                    &temp_file.to_str().unwrap(),
+                    tex_content
+                );
+                error!("{:?}", result.err());
+            };
             //result
         };
-
-        //let document = Document::load_from(&pdf_data[..]).unwrap();
-        //let pages = document.get_pages();
-        //println!("{} pages", pages.iter().len());
-        //// copy the file into the working directory
-        debug!("{}", &output.to_string_lossy());
-        generated_documents.insert(hash, output.to_owned());
-        //command_args = command_args + " " + output.to_str().unwrap();
-        command = command.arg(output.to_str().unwrap());
     }
+
+        //command_args = command_args + " " + output.to_str().unwrap();
 
     let output = command
         .arg(matches.value_of("OUTPUT").unwrap_or("output.pdf"))
