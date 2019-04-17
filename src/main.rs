@@ -46,6 +46,11 @@ fn main() {
                 .help("Filename for output PDF")
                 .index(2),
         )
+        //.arg(
+            //Arg::with_name("draft")
+                //.short("d")
+                //.help("Compile in draft mode")
+        //)
         .get_matches();
 
     let is_server_mode = matches.is_present("server");

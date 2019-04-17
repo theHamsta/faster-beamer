@@ -100,10 +100,10 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
         .into();
 
     let preamble_hash = md5::compute(&preamble);
-
+    let preamble_filename = format!("{:x}_{}.pdf", preamble_hash, matches.is_present("draft"));
     if ::std::env::current_dir()
         .unwrap()
-        .join(&format!("{:x}.pdf", preamble_hash))
+        .join(&preamble_filename)
         .is_file()
     {
         info!("Precompiled preamble already exists");
@@ -111,7 +111,8 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
         let output = Command::new("pdflatex")
             .arg("-shell-escape")
             .arg("-ini")
-            .arg(format!("-jobname=\"{:x}\"", preamble_hash))
+            //.arg(if matches.is_present("draft") {"-draftmode"} else {"-shell-escape"})
+            .arg(format!("-jobname=\"{}\"", preamble_filename))
             .arg("\"&pdflatex\"")
             .arg("mylatexformat.ltx")
             .arg(&input_file)
@@ -127,6 +128,7 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
         //// provide the folder where the file for latex compiler are found
         //// create a new clean compiler enviroment and the compiler wrapper
         //// run the underlying pdflatex or whatever
+        //let compile_string = format!("%&{:x}\n", preamble_hash)
         let compile_string = format!("%&{:x}\n", preamble_hash)
             + &preamble
             + "\n\\begin{document}\n"
@@ -167,7 +169,9 @@ pub fn process_file(input_file: &str, matches: &ArgMatches) {
             let temp_file = cachedir.join(format!("{:x}.tex", hash));
             assert!(write(&temp_file, &tex_content).is_ok());
             let dict = HashMap::new();
-            let compiler = LatexCompiler::new(dict).unwrap();
+            let  compiler = LatexCompiler::new(dict).unwrap();
+            //compiler = compiler.add_arg(if matches.is_present("draft") {"-draftmode"} else {"-shell-escape"});
+
             let latex_input = LatexInput::from(input_path.parent().unwrap().to_str().unwrap());
             let result = compiler.run(&temp_file.to_string_lossy(), &latex_input);
             if result.is_ok() {
