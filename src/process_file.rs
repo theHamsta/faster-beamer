@@ -11,12 +11,9 @@ use log::Level::Trace;
 use cachedir::CacheDirConfig;
 use clap::ArgMatches;
 use latexcompile::{LatexCompiler, LatexInput, LatexRunOptions};
-//use lopdf::Document;
 use md5;
 use std::collections::HashMap;
 use std::fs::write;
-//use std::fs::File;
-//use std::io::prelude::*;
 use rayon;
 use rayon::prelude::*;
 use regex::Regex;
@@ -38,7 +35,6 @@ lazy_static! {
     static ref PREVIOUS_FRAMES: Mutex<Vec<String>> = Mutex::new(Vec::new());
 }
 
-//use tree_sitter::Node;
 pub fn process_file(input_file: &str, args: &ArgMatches) {
     let input_path = Path::new(&input_file);
     if !input_path.is_file() {
@@ -107,10 +103,6 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
     }
     .unwrap();
 
-    //let latex = parsed_file.file_content;
-    //let pdf_data: Vec<u8> = tectonic::latex_to_pdf(latex).expect("processing failed");
-    //println!("Output PDF size is {} bytes", pdf_data.len());
-    //
     let cachedir: PathBuf = CacheDirConfig::new("faster-beamer")
         .get_cache_dir()
         .unwrap()
@@ -129,7 +121,6 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
         let output = Command::new("pdflatex")
             .arg("-shell-escape")
             .arg("-ini")
-            //.arg(if args.is_present("draft") {"-draftmode"} else {"-shell-escape"})
             .arg(format!("-jobname=\"{}\"", preamble_filename))
             .arg("\"&pdflatex\"")
             .arg("mylatexformat.ltx")
@@ -143,26 +134,17 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
     let mut generated_documents = Vec::new();
     let mut command = &mut Command::new("pdfunite");
     for f in &frames {
-        //// provide the folder where the file for latex compiler are found
-        //// create a new clean compiler enviroment and the compiler wrapper
-        //// run the underlying pdflatex or whatever
-        //let compile_string = format!("%&{:x}\n", preamble_hash)
+
         let compile_string = format!("%&{}\n", preamble_filename)
             + &preamble
             + "\n\\begin{document}\n"
             + &f
             + "\n\\end{document}\n";
-        //let result: Vec<u8> = tectonic::latex_to_pdf(&compile_string).expect("processing failed");
-        //println!("Output PDF size is {} bytes", result.len());
 
         let hash = md5::compute(&compile_string);
         let output = cachedir.join(format!("{:x}.pdf", hash));
         generated_documents.push((hash, compile_string));
 
-        //let document = Document::load_from(&pdf_data[..]).unwrap();
-        //let pages = document.get_pages();
-        //println!("{} pages", pages.iter().len());
-        //// copy the file into the working directory
         command = command.arg(output.to_str().unwrap());
     }
 
@@ -189,14 +171,6 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
             let pdf = cachedir.join(format!("{:x}.pdf", hash));
 
             if pdf.is_file() {
-                //let mut f = File::open(&output).unwrap();
-                //let mut buffer = Vec::new();
-                //// read the whole file
-                //f.read_to_end(&mut buffer).expect(&format!(
-                //"Failed to read file {}",
-                //&output.to_str().unwrap_or("")
-                //));
-                //buffer
                 debug!("{} is already compiled!", pdf.to_str().unwrap_or("???"));
             } else {
                 let temp_file = cachedir.join(format!("{:x}.tex", hash));
@@ -206,7 +180,6 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
                     .unwrap()
                     .add_arg("-shell-escape")
                     .add_arg("-interaction=nonstopmode");
-                //compiler = compiler.add_arg(if args.is_present("draft") {"-draftmode"} else {"-shell-escape"});
 
                 let latex_input = LatexInput::from(input_path.parent().unwrap().to_str().unwrap());
                 let result = compiler.run(
@@ -221,11 +194,9 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
                     error!("Failed to compile frame ({})", &temp_file.to_str().unwrap());
                     error!("{:?}", result.err());
                 };
-                //result
             };
         });
 
-    //command_args = command_args + " " + output.to_str().unwrap();
 
     let output_file = args.value_of("OUTPUT").unwrap_or("output.pdf");
 
@@ -236,7 +207,6 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
             .output()
             .expect("failed to execute process");
 
-        //println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
         eprint!("{}", String::from_utf8_lossy(&output.stdout));
     } else {
         if first_changed_frame < generated_documents.len() {
