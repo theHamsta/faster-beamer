@@ -79,8 +79,9 @@ fn main() {
         let mut hotwatch = Hotwatch::new().expect("Hotwatch failed to initialize.");
         hotwatch
             .watch(input_path, move |event: Event| match event {
-                Event::Write(file) | Event::Create(file) => {
+                Event::Write(file) | Event::NoticeRemove(file) => {
                     info!("{:?} has changed.", file);
+                    thread::sleep(time::Duration::from_millis(50));
                     let input_file = matches.value_of("INPUT").unwrap();
                     if Path::new(&input_file).canonicalize().unwrap()
                         == file.canonicalize().unwrap()
@@ -89,9 +90,9 @@ fn main() {
                         process_file::process_file(input_file, &matches);
                     }
                 }
-                Event::Remove(file) => {
-                    info!("Input {:?} deleted!", file);
-                }
+                //Event::Remove(file) => {
+                    //info!("Input {:?} deleted!", file);
+                //}
                 _ => {
                     info!("{:?}", event);
                 }
