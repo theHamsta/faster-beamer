@@ -8,8 +8,6 @@ use crate::parsing;
 
 use log::Level::Trace;
 
-use crate::tree_traversal;
-use crate::tree_traversal::TraversalOrder;
 use cachedir::CacheDirConfig;
 use clap::ArgMatches;
 use latexcompile::{LatexCompiler, LatexInput, LatexRunOptions};
@@ -89,26 +87,25 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
         }
     }
 
-    let document_env = tree_traversal::get_children(
-        parsed_file.syntax_tree.root_node(),
-        &|n| n.kind() == "document_env",
-        true,
-        TraversalOrder::BreadthFirst,
-    );
-    let preamble = if document_env.len() == 1 as usize {
-        parsed_file.file_content[0..document_env[0].start_byte()].to_owned()
-    } else {
-        warn!(
-            "Could not find document environment with tree_sitter ({})",
-            input_file
-        );
-        let find = parsed_file.file_content.find("\\begin{document}");
-        match find {
-            Some(x) => Some(parsed_file.file_content[..x].to_owned()),
-            None => None,
-        }
-        .unwrap()
-    };
+    //let document_env = tree_traversal::get_children(
+    //parsed_file.syntax_tree.root_node(),
+    //&|n| n.kind() == "document_env",
+    //true,
+    //TraversalOrder::BreadthFirst,
+    //);
+    //let preamble =[> if document_env.len() == 1 as usize {<]
+    //parsed_file.file_content[0..document_env[0].start_byte()].to_owned()
+    //} else {
+    //warn!(
+    //"Could not find document environment with tree_sitter ({})",
+    //input_file
+    /*);*/
+    let find = parsed_file.file_content.find("\\begin{document}");
+    let preamble = match find {
+        Some(x) => Some(parsed_file.file_content[..x].to_owned()),
+        None => None,
+    }
+    .unwrap();
 
     //let latex = parsed_file.file_content;
     //let pdf_data: Vec<u8> = tectonic::latex_to_pdf(latex).expect("processing failed");
@@ -121,14 +118,14 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
 
     let preamble_hash = md5::compute(&preamble);
     let preamble_filename = format!("{:x}_{}", preamble_hash, args.is_present("draft"));
-    if ::std::env::current_dir()
-        .unwrap()
+    if input_path.parent().unwrap()
         .join(format!("{}.fmt", preamble_filename))
         .is_file()
     {
         info!("Precompiled preamble already exists");
     } else {
-        info!("Precompiling preamble");
+        info!("Precompiling preamble {:?}", input_path
+        .join(format!("{}.fmt", preamble_filename)));
         let output = Command::new("pdflatex")
             .arg("-shell-escape")
             .arg("-ini")
