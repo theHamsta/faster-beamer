@@ -7,12 +7,17 @@ mod beamer;
 mod parsing;
 mod process_file;
 mod tree_traversal;
+use std::env;
 
 use clap::{App, Arg};
 use std::path::Path;
 use std::{thread, time};
 
 fn main() {
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "INFO");
+    }
+
     pretty_env_logger::init();
 
     let matches = App::new("faster-beamer")

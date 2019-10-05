@@ -38,20 +38,23 @@ lazy_static! {
 pub fn process_file(input_file: &str, args: &ArgMatches) {
     let input_path = Path::new(&input_file);
     if !input_path.is_file() {
-        eprintln!("Could not open {}", input_file);
+        error!("Could not open {}", input_file);
         return;
     }
 
     let parsed_file = parsing::ParsedFile::new(input_file.to_string());
-    debug!("{}", parsed_file.syntax_tree.root_node().to_sexp());
+    trace!("{}", parsed_file.syntax_tree.root_node().to_sexp());
 
-    let frame_nodes = get_frames(&parsed_file);
-    info!("Found {} frames with tree-sitter.", frame_nodes.len());
+    let frame_nodes = if args.is_present("tree-sitter") {
+        get_frames(&parsed_file)
+    } else {
+        Vec::new()
+    };
 
     let mut frames = Vec::with_capacity(frame_nodes.len());
-
     if !frame_nodes.is_empty() {
         for f in frame_nodes.iter() {
+            info!("Found {} frames with tree-sitter.", frame_nodes.len());
             let node_string = parsed_file.get_node_string(&f);
             frames.push(node_string.to_string());
         }
@@ -63,14 +66,14 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
     }
     info!("Found {} frames.", frames.len());
 
-    if log_enabled!(Trace) {
+    if log_enabled!(Trace) && args.is_present("tree-sitter") {
         let root_node = parsed_file.syntax_tree.root_node();
         let mut stack = vec![root_node];
 
         while !stack.is_empty() {
             let current_node = stack.pop().unwrap();
             if current_node.kind() == "ERROR" {
-                eprintln!(
+                error!(
                     "\n{}:\n\t {}",
                     current_node.kind(),
                     parsed_file.get_node_string(&current_node),
@@ -131,8 +134,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
             .arg(&input_file)
             .output()
             .expect("Failed to compile preamble");
-        //eprint!("{}", String::from_utf8_lossy(&output.stdout));
-        eprint!("{}", String::from_utf8_lossy(&output.stderr));
+        error!("{}", String::from_utf8_lossy(&output.stderr));
     }
 
     let mut generated_documents = Vec::new();
@@ -208,16 +210,21 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
             .output()
             .expect("failed to execute process");
 
-        eprint!("{}", String::from_utf8_lossy(&output.stdout));
+        error!("{}", String::from_utf8_lossy(&output.stdout));
     } else {
         if first_changed_frame < generated_documents.len() {
             let (hash, _) = generated_documents[first_changed_frame];
             let compiled_pdf = cachedir.join(format!("{:x}.pdf", hash));
             info!("Linking: {:?} -> {:?}", &compiled_pdf, &output_file);
-            if Path::new(output_file).is_file() {
-                let _result = ::std::fs::remove_file(&output_file).expect("Tried to delete previous output file");
+
+            let _result =
+                ::std::fs::remove_file(&output_file).expect("Tried to delete previous output file");
+            if Path::new(&compiled_pdf).is_file() {
+                ::symlink::symlink_file(compiled_pdf, output_file)
+                    .expect("Failed to create symlink to output file.");
+            } else {
+                error!("Compilation failed!");
             }
-            ::symlink::symlink_file(compiled_pdf, output_file).expect("Failed to create symlink to output file.");
         }
     }
 
