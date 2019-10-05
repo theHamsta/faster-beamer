@@ -45,6 +45,12 @@ fn main() {
                 .index(1),
         )
         .arg(
+            Arg::with_name("unite")
+                .short("u")
+                .long("unite")
+                .help("Unites all slides to a PDF (default is only to output newest slide)")
+        )
+        .arg(
             Arg::with_name("OUTPUT")
                 .help("Filename for output PDF")
                 .index(2),

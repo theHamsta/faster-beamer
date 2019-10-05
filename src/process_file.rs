@@ -208,14 +208,18 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
 
     //command_args = command_args + " " + output.to_str().unwrap();
 
-    info!("PDF unite!");
-    let output = command
-        .arg(args.value_of("OUTPUT").unwrap_or("output.pdf"))
-        .output()
-        .expect("failed to execute process");
+    if args.is_present("unite") {
+        info!("PDF unite!");
+        let output = command
+            .arg(args.value_of("OUTPUT").unwrap_or("output.pdf"))
+            .output()
+            .expect("failed to execute process");
 
-    //println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-    eprint!("{}", String::from_utf8_lossy(&output.stdout));
+        //println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+        eprint!("{}", String::from_utf8_lossy(&output.stdout));
+    } else {
+        
+    }
 
     //let root_node = parsed_file.syntax_tree.root_node();
     //let mut stack = vec![root_node];
