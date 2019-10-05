@@ -1,15 +1,10 @@
 extern crate tree_sitter;
-//#[macro_use]
 extern crate serde_json;
-extern crate tera;
-//#[macro_use]
 extern crate clap;
 #[macro_use]
 extern crate log;
 extern crate latexcompile;
-extern crate lopdf;
 extern crate pretty_env_logger;
-//extern crate tectonic;
 extern crate cachedir;
 extern crate md5;
 extern crate rayon;
@@ -97,9 +92,6 @@ fn main() {
                         process_file::process_file(input_file, &matches);
                     }
                 }
-                //Event::Remove(file) => {
-                //info!("Input {:?} deleted!", file);
-                //}
                 _ => {
                     info!("{:?}", event);
                 }
