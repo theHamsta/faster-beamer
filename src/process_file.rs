@@ -115,10 +115,10 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
         .into();
 
     let preamble_hash = md5::compute(&preamble);
-    let preamble_filename = format!("{:x}_{}.pdf", preamble_hash, args.is_present("draft"));
+    let preamble_filename = format!("{:x}_{}", preamble_hash, args.is_present("draft"));
     if ::std::env::current_dir()
         .unwrap()
-        .join(&preamble_filename)
+        .join(format!("{}.fmt", preamble_filename))
         .is_file()
     {
         info!("Precompiled preamble already exists");
@@ -145,7 +145,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
         //// create a new clean compiler enviroment and the compiler wrapper
         //// run the underlying pdflatex or whatever
         //let compile_string = format!("%&{:x}\n", preamble_hash)
-        let compile_string = format!("%&{:x}\n", preamble_hash)
+        let compile_string = format!("%&{}\n", preamble_filename)
             + &preamble
             + "\n\\begin{document}\n"
             + &f
@@ -208,6 +208,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
 
     //command_args = command_args + " " + output.to_str().unwrap();
 
+    info!("PDF unite!");
     let output = command
         .arg(args.value_of("OUTPUT").unwrap_or("output.pdf"))
         .output()
