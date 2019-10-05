@@ -24,7 +24,7 @@ mod tree_traversal;
 
 use clap::{App, Arg};
 use std::path::Path;
-use std::{process, thread, time};
+use std::{thread, time};
 
 fn main() {
     pretty_env_logger::init();
@@ -50,6 +50,12 @@ fn main() {
                 .short("u")
                 .long("unite")
                 .help("Unites all slides to a PDF (default is only to output newest slide)"),
+        )
+        .arg(
+            Arg::with_name("tree-sitter")
+                .short("t")
+                .long("tree-sitter")
+                .help("Use tree-sitter to parse LaTeX (instead of regexes)"),
         )
         .arg(
             Arg::with_name("OUTPUT")
@@ -91,7 +97,7 @@ fn main() {
                     }
                 }
                 //Event::Remove(file) => {
-                    //info!("Input {:?} deleted!", file);
+                //info!("Input {:?} deleted!", file);
                 //}
                 _ => {
                     info!("{:?}", event);

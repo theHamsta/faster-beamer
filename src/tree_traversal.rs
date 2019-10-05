@@ -8,7 +8,6 @@ use tree_sitter::Node;
 
 pub enum TraversalOrder {
     BreadthFirst,
-    DepthFirst,
 }
 
 pub fn get_nodes_of_type(root_node: Node, node_type: String, return_first_only: bool) -> Vec<Node> {
@@ -36,7 +35,7 @@ pub fn get_nodes_of_type(root_node: Node, node_type: String, return_first_only: 
 
 pub fn get_children<'a, 'b>(
     root_node: Node<'a>,
-    predicate: &Fn(Node<'a>) -> bool,
+    predicate: &dyn Fn(Node<'a>) -> bool,
     return_first_only: bool,
     traversal_order: TraversalOrder,
 ) -> Vec<Node<'a>> {
@@ -56,11 +55,6 @@ pub fn get_children<'a, 'b>(
         let num_children = current_node.named_child_count();
 
         match traversal_order {
-            TraversalOrder::DepthFirst => {
-                for i in (0..num_children).rev() {
-                    stack.push(current_node.named_child(i).unwrap())
-                }
-            }
             TraversalOrder::BreadthFirst => {
                 for i in 0..num_children {
                     stack.push(current_node.named_child(i).unwrap())
@@ -71,32 +65,6 @@ pub fn get_children<'a, 'b>(
     results
 }
 
-pub fn get_scope_nodes<'a, 'b>(
-    current_node: Node<'a>,
-    predicate: &Fn(Node<'a>) -> bool,
-    return_first_only: bool,
-) -> Vec<Node<'a>> {
-    let mut results = Vec::new();
-    let mut maybe_parent = Some(current_node);
-
-    while maybe_parent.is_some() {
-        let current_node = maybe_parent.unwrap();
-        let mut maybe_sibling = Some(current_node);
-        while maybe_sibling.is_some() {
-            let sibling = maybe_sibling.unwrap();
-            if predicate(sibling) {
-                results.push(sibling);
-                if return_first_only {
-                    return results;
-                }
-            }
-            maybe_sibling = sibling.prev_sibling();
-        }
-
-        maybe_parent = current_node.parent()
-    }
-    results
-}
 
 #[cfg(test)]
 mod tests {

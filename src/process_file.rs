@@ -57,7 +57,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
     let mut frames = Vec::with_capacity(frame_nodes.len());
 
     if !frame_nodes.is_empty() {
-        for (i, f) in frame_nodes.iter().enumerate() {
+        for f in frame_nodes.iter() {
             let node_string = parsed_file.get_node_string(&f);
             frames.push(node_string.to_string());
         }
@@ -246,7 +246,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
             let (hash, _) = generated_documents[first_changed_frame];
             let compiled_pdf = cachedir.join(format!("{:x}.pdf", hash));
             info!("Copy: {:?} -> {:?}", &compiled_pdf, &output_file);
-            ::std::fs::copy(compiled_pdf, output_file);
+            let _result = ::std::fs::copy(compiled_pdf, output_file);
         }
     }
 
