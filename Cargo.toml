@@ -5,6 +5,12 @@ authors = ["Stephan Seitz <stephan.seitz@fau.de>"]
 edition = "2018"
 description = "An incremental compiler for LaTeX Beamer slides"
 license="GPLv3"
+repository = "https://github.com/theHamsta/faster-beamer"
+keywords = ["latex"]
+categories = ["Latex"]
+readme = "README.md"
+license-file = "LICENSE"
+license = "GPLv3"
 
 [dependencies]
 tree-sitter = "0.3.10"
@@ -16,7 +22,7 @@ clap = "2.33.0"
 hotwatch = "0.4.2"
 log = { version = "0.4.8", features = ["max_level_debug", "release_max_level_warn"] }
 pretty_env_logger = "0.3.1"
-latexcompile = {git = "https://github.com/theHamsta/latexcompile"}
+latexcompile = { git = "https://github.com/theHamsta/latexcompile" }
 cachedir = "0.1.1"
 md5 = "0.6.1"
 rayon = "1.2.0"
