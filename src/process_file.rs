@@ -24,6 +24,7 @@ use rayon::prelude::*;
 use regex::Regex;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::Mutex;
 use std::vec::Vec;
 
 lazy_static! {
@@ -33,6 +34,10 @@ lazy_static! {
 lazy_static! {
     static ref DOCUMENT_REGEX: Regex =
         Regex::new(r"(?ms)^\\begin\{document\}.*^\\end\{document\}").unwrap();
+}
+
+lazy_static! {
+    static ref PREVIOUS_FRAMES: Mutex<Vec<String>> = Mutex::new(Vec::new());
 }
 
 //use tree_sitter::Node;
@@ -140,7 +145,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
 
     let mut generated_documents = Vec::new();
     let mut command = &mut Command::new("pdfunite");
-    for f in frames {
+    for f in &frames {
         //// provide the folder where the file for latex compiler are found
         //// create a new clean compiler enviroment and the compiler wrapper
         //// run the underlying pdflatex or whatever
@@ -163,6 +168,23 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
         //// copy the file into the working directory
         command = command.arg(output.to_str().unwrap());
     }
+
+    trace!("Comparing frames");
+    let mut first_changed_frame = 0;
+    for frame_pair in frames.iter().zip((*PREVIOUS_FRAMES.lock().unwrap()).iter()) {
+        match frame_pair {
+            (lhs, rhs) if lhs != rhs => {
+                dbg!("{:?} vs {:?}", lhs, rhs);
+                break;
+            }
+            _ => first_changed_frame += 1,
+        }
+    }
+    debug!(
+        "Found first difference in frame {} from {}",
+        &first_changed_frame,
+        frames.len()
+    );
 
     generated_documents
         .par_iter()
@@ -208,75 +230,25 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
 
     //command_args = command_args + " " + output.to_str().unwrap();
 
+    let output_file = args.value_of("OUTPUT").unwrap_or("output.pdf");
+
     if args.is_present("unite") {
         info!("PDF unite!");
         let output = command
-            .arg(args.value_of("OUTPUT").unwrap_or("output.pdf"))
+            .arg(output_file)
             .output()
             .expect("failed to execute process");
 
         //println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
         eprint!("{}", String::from_utf8_lossy(&output.stdout));
     } else {
-        
+        if first_changed_frame < generated_documents.len() {
+            let (hash, _) = generated_documents[first_changed_frame];
+            let compiled_pdf = cachedir.join(format!("{:x}.pdf", hash));
+            info!("Copy: {:?} -> {:?}", &compiled_pdf, &output_file);
+            ::std::fs::copy(compiled_pdf, output_file);
+        }
     }
 
-    //let root_node = parsed_file.syntax_tree.root_node();
-    //let mut stack = vec![root_node];
-
-    //while !stack.is_empty() {
-    //let current_node = stack.pop().unwrap();
-    //if current_node.kind() != "ERROR" {
-    //println!(
-    //"\n{}:\n\t {}",
-    //current_node.kind(),
-    //parsed_file.get_node_string(&current_node)
-    //);
-    //}
-
-    //for i in (0..current_node.named_child_count()).rev() {
-    //stack.push(current_node.named_child(i).unwrap());
-    //}
-    //}
-
-    //let node_types = vec!["text_env", "group"];
-    //for t in node_types {
-    //let comments = parsed_file.get_nodes_of_type(t.to_string());
-    //println!("");
-    //println!("Found {} {}s:", comments.len(), t);
-    //for c in comments {
-    //let text = &parsed_file.file_content[c.start_byte()..c.end_byte()];
-    //println!("{}", text);
-    //}
-    //}
-
-    //let node_types = vec!["text_env"];
-    //let mut frames = Vec::new();
-    //for t in node_types {
-    //let comments = parsed_file.get_nodes_of_type(t.to_string());
-    //println!("");
-    //println!("Found {} {}s:", comments.len(), t);
-    //for c in comments {
-    //let children = tree_traversal::get_children(
-    //c,
-    //&|n| beamer::is_frame_environment(n, &parsed_file),
-    //true,
-    //&|n: Node| {
-    //n.kind() == "begin"
-    //&& parsed_file
-    //.get_node_string(&n)
-    //.to_string()
-    //.contains("{frame}")
-    //},
-    //true,
-    //TraversalOrder::DepthFirst,
-    //);
-    //if children.len() == 1 {
-    //println!("");
-    //println!("{}", parsed_file.get_node_string(&c));
-    //frames.push(c);
-    //}
-    //}
-    //println!("Found {} frames", frames.len());
-    //}
+    *PREVIOUS_FRAMES.lock().unwrap() = frames;
 }
