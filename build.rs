@@ -6,7 +6,6 @@
 extern crate cc;
 
 fn main() {
-
     cc::Build::new()
         .include("tree-sitter-latex/src")
         .file("tree-sitter-latex/src/parser.c")
