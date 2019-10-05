@@ -23,8 +23,8 @@ mod process_file;
 mod tree_traversal;
 
 use clap::{App, Arg};
-use std::{process, thread, time};
 use std::path::Path;
+use std::{process, thread, time};
 
 fn main() {
     pretty_env_logger::init();
@@ -65,7 +65,12 @@ fn main() {
 
     let is_server_mode = matches.is_present("server");
     let input_file = matches.value_of("INPUT").unwrap();
-    let input_path = Path::new(input_file).parent().expect("Could not determine parent directory of input file");
+    let input_path = Path::new(input_file)
+        .parent()
+        .expect("Could not determine parent directory of input file");
+
+    info!("Processing {:?}.", input_file);
+    process_file::process_file(input_file, &matches);
 
     if is_server_mode {
         use hotwatch::{Event, Hotwatch};
@@ -77,7 +82,9 @@ fn main() {
                 Event::Write(file) | Event::Create(file) => {
                     info!("{:?} has changed.", file);
                     let input_file = matches.value_of("INPUT").unwrap();
-                    if Path::new(&input_file).canonicalize().unwrap() == file.canonicalize().unwrap() {
+                    if Path::new(&input_file).canonicalize().unwrap()
+                        == file.canonicalize().unwrap()
+                    {
                         info!("Processing {:?}.", file);
                         process_file::process_file(input_file, &matches);
                     }
@@ -96,8 +103,5 @@ fn main() {
         loop {
             thread::sleep(time::Duration::from_millis(100));
         }
-    } else {
-        info!("Processing {:?}.", input_file);
-        process_file::process_file(input_file, &matches);
     }
 }
