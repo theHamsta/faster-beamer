@@ -12,11 +12,11 @@ use cachedir::CacheDirConfig;
 use clap::ArgMatches;
 use latexcompile::{LatexCompiler, LatexInput, LatexRunOptions};
 use md5;
-use std::collections::HashMap;
-use std::fs::write;
 use rayon;
 use rayon::prelude::*;
 use regex::Regex;
+use std::collections::HashMap;
+use std::fs::write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
@@ -110,14 +110,18 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
 
     let preamble_hash = md5::compute(&preamble);
     let preamble_filename = format!("{:x}_{}", preamble_hash, args.is_present("draft"));
-    if input_path.parent().unwrap()
+    if input_path
+        .parent()
+        .unwrap()
         .join(format!("{}.fmt", preamble_filename))
         .is_file()
     {
         info!("Precompiled preamble already exists");
     } else {
-        info!("Precompiling preamble {:?}", input_path
-        .join(format!("{}.fmt", preamble_filename)));
+        info!(
+            "Precompiling preamble {:?}",
+            input_path.join(format!("{}.fmt", preamble_filename))
+        );
         let output = Command::new("pdflatex")
             .arg("-shell-escape")
             .arg("-ini")
@@ -134,7 +138,6 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
     let mut generated_documents = Vec::new();
     let mut command = &mut Command::new("pdfunite");
     for f in &frames {
-
         let compile_string = format!("%&{}\n", preamble_filename)
             + &preamble
             + "\n\\begin{document}\n"
@@ -197,7 +200,6 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
             };
         });
 
-
     let output_file = args.value_of("OUTPUT").unwrap_or("output.pdf");
 
     if args.is_present("unite") {
@@ -212,8 +214,11 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
         if first_changed_frame < generated_documents.len() {
             let (hash, _) = generated_documents[first_changed_frame];
             let compiled_pdf = cachedir.join(format!("{:x}.pdf", hash));
-            info!("Copy: {:?} -> {:?}", &compiled_pdf, &output_file);
-            let _result = ::std::fs::copy(compiled_pdf, output_file);
+            info!("Linking: {:?} -> {:?}", &compiled_pdf, &output_file);
+            if Path::new(output_file).is_file() {
+                let _result = ::std::fs::remove_file(&output_file).expect("Tried to delete previous output file");
+            }
+            ::symlink::symlink_file(compiled_pdf, output_file).expect("Failed to create symlink to output file.");
         }
     }
 

@@ -16,6 +16,7 @@ extern crate rayon;
 extern crate regex;
 #[macro_use]
 extern crate lazy_static;
+extern crate symlink;
 
 mod beamer;
 mod parsing;
