@@ -1,17 +1,7 @@
-extern crate tree_sitter;
-extern crate serde_json;
-extern crate clap;
 #[macro_use]
 extern crate log;
-extern crate latexcompile;
-extern crate pretty_env_logger;
-extern crate cachedir;
-extern crate md5;
-extern crate rayon;
-extern crate regex;
 #[macro_use]
 extern crate lazy_static;
-extern crate symlink;
 
 mod beamer;
 mod parsing;
