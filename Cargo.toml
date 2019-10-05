@@ -7,6 +7,7 @@ description = "An incremental compiler for LaTeX Beamer slides"
 license="GPLv3"
 repository = "https://github.com/theHamsta/faster-beamer"
 keywords = ["latex"]
+homepage = "https://github.com/theHamsta/faster-beamer"
 categories = ["Latex"]
 readme = "README.md"
 license-file = "LICENSE"
