@@ -99,7 +99,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
         parsed_file.file_content[0..document_env[0].start_byte()].to_owned()
     } else {
         warn!(
-            "Could not find document enviroment with tree_sitter ({})",
+            "Could not find document environment with tree_sitter ({})",
             input_file
         );
         let find = parsed_file.file_content.find("\\begin{document}");
