@@ -13,6 +13,9 @@ extern crate pretty_env_logger;
 extern crate cachedir;
 extern crate md5;
 extern crate rayon;
+extern crate regex;
+#[macro_use]
+extern crate lazy_static;
 
 mod beamer;
 mod parsing;
@@ -47,9 +50,9 @@ fn main() {
                 .index(2),
         )
         //.arg(
-            //Arg::with_name("draft")
-                //.short("d")
-                //.help("Compile in draft mode")
+        //Arg::with_name("draft")
+        //.short("d")
+        //.help("Compile in draft mode")
         //)
         .get_matches();
 
