@@ -24,6 +24,7 @@ mod tree_traversal;
 
 use clap::{App, Arg};
 use std::{process, thread, time};
+use std::path::Path;
 
 fn main() {
     pretty_env_logger::init();
@@ -48,7 +49,7 @@ fn main() {
             Arg::with_name("unite")
                 .short("u")
                 .long("unite")
-                .help("Unites all slides to a PDF (default is only to output newest slide)")
+                .help("Unites all slides to a PDF (default is only to output newest slide)"),
         )
         .arg(
             Arg::with_name("OUTPUT")
@@ -64,6 +65,7 @@ fn main() {
 
     let is_server_mode = matches.is_present("server");
     let input_file = matches.value_of("INPUT").unwrap();
+    let input_path = Path::new(input_file).parent().expect("Could not determine parent directory of input file");
 
     if is_server_mode {
         use hotwatch::{Event, Hotwatch};
@@ -71,15 +73,20 @@ fn main() {
 
         let mut hotwatch = Hotwatch::new().expect("Hotwatch failed to initialize.");
         hotwatch
-            .watch(input_file, move |event: Event| {
-                if let Event::Write(_) = event {
-                    info!("Input file has changed.");
+            .watch(input_path, move |event: Event| match event {
+                Event::Write(file) | Event::Create(file) => {
+                    info!("{:?} has changed.", file);
                     let input_file = matches.value_of("INPUT").unwrap();
-                    process_file::process_file(input_file, &matches);
+                    if Path::new(&input_file).canonicalize().unwrap() == file.canonicalize().unwrap() {
+                        info!("Processing {:?}.", file);
+                        process_file::process_file(input_file, &matches);
+                    }
                 }
-                if let Event::Remove(_) = event {
-                    info!("Input file deleted!");
-                    process::exit(0);
+                Event::Remove(file) => {
+                    info!("Input {:?} deleted!", file);
+                }
+                _ => {
+                    info!("{:?}", event);
                 }
             })
             .expect("Failed to watch file!");
@@ -90,6 +97,7 @@ fn main() {
             thread::sleep(time::Duration::from_millis(100));
         }
     } else {
+        info!("Processing {:?}.", input_file);
         process_file::process_file(input_file, &matches);
     }
 }
