@@ -156,7 +156,6 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
     for frame_pair in frames.iter().zip((*PREVIOUS_FRAMES.lock().unwrap()).iter()) {
         match frame_pair {
             (lhs, rhs) if lhs != rhs => {
-                dbg!("{:?} vs {:?}", lhs, rhs);
                 break;
             }
             _ => first_changed_frame += 1,
