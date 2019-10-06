@@ -269,8 +269,6 @@ dependencies = [
  "pretty_env_logger 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json 1.0.41 (registry+https://github.com/rust-lang/crates.io-index)",
  "symlink 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tree-sitter 0.3.10 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -403,7 +401,7 @@ dependencies = [
 [[package]]
 name = "latexcompile"
 version = "0.1.0"
-source = "git+https://github.com/theHamsta/latexcompile#be38444405188b39332f02e9cd425740a5858ed2"
+source = "git+https://github.com/theHamsta/latexcompile#df2ad2ec63c861b85df1fe8ad6b753ae45fdc9f5"
 dependencies = [
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure_derive 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -793,9 +791,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "serde"
 version = "1.0.101"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "serde_derive 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "serde_derive"
