@@ -104,7 +104,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
         Some(x) => Some(parsed_file.file_content[..x].to_owned()),
         None => None,
     }
-    .unwrap();
+    .unwrap_or(Some("\documentclass[aspectratio=43,c,xcolor=dvipsnames]{beamer}".to_string()));
 
     let cachedir: PathBuf = CacheDirConfig::new("faster-beamer")
         .get_cache_dir()
