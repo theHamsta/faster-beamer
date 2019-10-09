@@ -217,8 +217,10 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
             let compiled_pdf = cachedir.join(format!("{:x}.pdf", hash));
             info!("Linking: {:?} -> {:?}", &compiled_pdf, &output_file);
 
-            let _result =
-                ::std::fs::remove_file(&output_file).expect("Tried to delete previous output file");
+            if Path::new(&output_file).is_file() {
+                let _result =
+                    ::std::fs::remove_file(&output_file).expect("Tried to delete previous output file");
+            }
             if Path::new(&compiled_pdf).is_file() {
                 ::symlink::symlink_file(compiled_pdf, output_file)
                     .expect("Failed to create symlink to output file.");
