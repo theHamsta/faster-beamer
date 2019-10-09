@@ -10,7 +10,6 @@ keywords = ["latex"]
 homepage = "https://github.com/theHamsta/faster-beamer"
 categories = ["Latex"]
 readme = "README.md"
-license-file = "LICENSE"
 
 [dependencies]
 tree-sitter = "0.3.10"
