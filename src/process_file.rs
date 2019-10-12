@@ -153,6 +153,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
         match output {
             Err(e) => {
                 error!("Failed to compile preamble!\n{}", e);
+                *PREVIOUS_FRAMES.lock().unwrap() = frames;
                 return Err(FasterBeamerError::CompileError);
             }
             Ok(output) if !output.status.success() => {
@@ -160,6 +161,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
                     "Failed to compile preamble! {}",
                     str::from_utf8(&output.stderr).unwrap()
                 );
+                *PREVIOUS_FRAMES.lock().unwrap() = frames;
                 return Err(FasterBeamerError::CompileError);
             }
             _ => {}
@@ -260,6 +262,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
         match output {
             Err(e) => {
                 error!("Failed to run pdf unite!\n{}", e);
+                *PREVIOUS_FRAMES.lock().unwrap() = frames;
                 return Err(FasterBeamerError::PdfUniteError);
             }
             Ok(output) if !output.status.success() => {
@@ -267,6 +270,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
                     "Failed to run pdfunite! {}",
                     str::from_utf8(&output.stderr).unwrap()
                 );
+                *PREVIOUS_FRAMES.lock().unwrap() = frames;
                 return Err(FasterBeamerError::PdfUniteError);
             }
             _ => {}
@@ -289,24 +293,25 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
                 let error_frame = String::from_utf8_lossy(include_bytes!("error.tex")).to_owned();
                 let error_file = cachedir.join("error.tex");
                 let error_pdf = cachedir.join("error.pdf");
-                if write(&error_file, &error_frame[..]).is_ok() {
+                if !error_pdf.exists() && write(&error_file, &error_frame[..]).is_ok() {
                     let mut compiler = LatexCompiler::new()
                         .unwrap()
                         .add_arg("-shell-escape")
                         .add_arg("-interaction=nonstopmode");
                     compiler.working_dir = cachedir;
 
-                    let result = compiler.run(
+                    let _result = compiler.run(
                         &error_file.canonicalize().unwrap().to_string_lossy(),
                         &LatexInput::new(),
                         LatexRunOptions::new(),
                     );
-                    if result.is_ok() {
-                        ::symlink::symlink_file(error_pdf, output_file)
-                            .expect("Failed to create symlink to error file.");
-                    }
+                }
+                if error_pdf.exists() {
+                    ::symlink::symlink_file(error_pdf, output_file)
+                        .expect("Failed to create symlink to error file.");
                 }
 
+                *PREVIOUS_FRAMES.lock().unwrap() = frames;
                 return Err(FasterBeamerError::CompileError);
             }
         }
