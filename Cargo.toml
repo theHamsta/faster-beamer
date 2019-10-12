@@ -19,13 +19,15 @@ clap = "2.33.0"
 hotwatch = "0.4.2"
 log = { version = "0.4.8", features = ["max_level_debug", "release_max_level_warn"] }
 pretty_env_logger = "0.3.1"
-latexcompile_fasterbeamer = { git = "https://github.com/theHamsta/latexcompile" }
 cachedir = "0.1.1"
 md5 = "0.6.1"
 rayon = "1.2.0"
 regex = "1.3.1"
 symlink = "0.1.0"
 indicatif = "0.12.0"
+failure_derive = "0.1.6"
+failure = "0.1.6"
+tempfile = "3.1.0"
 
 [build-dependencies]
 cc = { version = "1.0.45", features = ["parallel"] }

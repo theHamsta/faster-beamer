@@ -2,17 +2,19 @@
 extern crate log;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate failure_derive;
 
 mod beamer;
+mod latexcompile;
 mod parsing;
 mod process_file;
 mod tree_traversal;
-use std::env;
 
 use clap::{App, Arg};
+use std::env;
 use std::path::Path;
 use std::{thread, time};
-
 
 fn main() {
     if env::var("RUST_LOG").is_err() {

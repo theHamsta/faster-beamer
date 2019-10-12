@@ -8,10 +8,10 @@ use crate::parsing;
 
 use log::Level::Trace;
 
+use crate::latexcompile::{LatexCompiler, LatexInput, LatexRunOptions};
 use cachedir::CacheDirConfig;
 use clap::ArgMatches;
 use indicatif::ProgressBar;
-use latexcompile_fasterbeamer::{LatexCompiler, LatexInput, LatexRunOptions};
 use md5;
 use rayon;
 use rayon::prelude::*;
