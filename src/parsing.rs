@@ -9,6 +9,7 @@ use std::fs;
 use tree_sitter::{Language, Node, Parser};
 
 extern "C" {
+    #[cfg(feature = "tree-sitter-parsing")]
     fn tree_sitter_latex() -> Language;
 }
 
@@ -26,8 +27,10 @@ impl ParsedFile {
 
     pub fn from_string(filename: String, file_content: String) -> ParsedFile {
         let mut parser = Parser::new();
+        #[cfg(feature = "tree-sitter-parsing")]
         let language = unsafe { tree_sitter_latex() };
 
+        #[cfg(feature = "tree-sitter-parsing")]
         parser.set_language(language).unwrap();
 
         let tree = parser
