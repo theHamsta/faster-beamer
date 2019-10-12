@@ -6,7 +6,10 @@
 
 use crate::tree_traversal::get_nodes_of_type;
 use std::fs;
-use tree_sitter::{Language, Node, Parser};
+
+#[cfg(feature = "tree-sitter-parsing")]
+use tree_sitter::Language;
+use tree_sitter::{Node, Parser};
 
 extern "C" {
     #[cfg(feature = "tree-sitter-parsing")]
