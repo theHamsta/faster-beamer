@@ -13,12 +13,15 @@ use clap::{App, Arg};
 use std::path::Path;
 use std::{thread, time};
 
+
 fn main() {
     if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "INFO");
+        let mut builder = pretty_env_logger::formatted_builder();
+        builder.parse_filters("info");
+        builder.init();
+    } else {
+        pretty_env_logger::init();
     }
-
-    pretty_env_logger::init();
 
     let matches = App::new("faster-beamer")
         .version("1.0")

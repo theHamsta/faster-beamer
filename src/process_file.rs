@@ -11,12 +11,12 @@ use log::Level::Trace;
 use cachedir::CacheDirConfig;
 use clap::ArgMatches;
 use indicatif::ProgressBar;
-use latexcompile::{LatexCompiler, LatexInput, LatexRunOptions};
+use latexcompile_fasterbeamer::{LatexCompiler, LatexInput, LatexRunOptions};
 use md5;
 use rayon;
 use rayon::prelude::*;
 use regex::Regex;
-use std::collections::HashMap;
+use std::env::current_dir;
 use std::fs::write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -45,7 +45,9 @@ lazy_static! {
 }
 
 pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
+    let cwd = current_dir().unwrap();
     let input_path = Path::new(&input_file);
+    let input_dir = input_path.parent().unwrap_or(&cwd);
     if !input_path.is_file() {
         error!("Could not open {}", input_file);
         return Err(FasterBeamerError::InputFileNotExistent);
@@ -119,6 +121,10 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
         .get_cache_dir()
         .unwrap()
         .into();
+    let cache_subdir = cachedir.join(format!(
+        "./{}",
+        &input_dir.canonicalize().unwrap().to_str().unwrap()
+    ));
 
     let preamble_hash = md5::compute(&preamble);
     let preamble_filename = format!("{:x}_{}", preamble_hash, args.is_present("draft"));
@@ -165,7 +171,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
             + "\n\\end{document}\n";
 
         let hash = md5::compute(&compile_string);
-        let output = cachedir.join(format!("{:x}.pdf", hash));
+        let output = cache_subdir.join(format!("{:x}.pdf", hash));
         generated_documents.push((hash, compile_string));
 
         command = command.arg(output.to_str().unwrap());
@@ -193,36 +199,48 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
         .par_iter()
         .enumerate()
         .for_each(|(frame_idx, (hash, tex_content))| {
-            let pdf = cachedir.join(format!("{:x}.pdf", hash));
+            let pdf = cache_subdir.join(format!("{:x}.pdf", hash));
 
             if pdf.is_file() {
                 trace!("{} is already compiled!", pdf.to_str().unwrap_or("???"));
             } else {
-                let temp_file = cachedir.join(format!("{:x}.tex", hash));
-                assert!(write(&temp_file, &tex_content).is_ok());
-                let dict = HashMap::new();
-                let compiler = LatexCompiler::new(dict)
-                    .unwrap()
-                    .add_arg("-shell-escape")
-                    .add_arg("-interaction=nonstopmode");
+                let latex_input = LatexInput::from_lazy(
+                    input_dir.canonicalize().unwrap().to_str().unwrap(),
+                    &cachedir,
+                )
+                .expect("Failed to create LatexInput");
 
-                let latex_input = LatexInput::from(input_path.parent().unwrap().to_str().unwrap());
-                let result = compiler.run(
-                    &temp_file.to_string_lossy(),
-                    &latex_input,
-                    LatexRunOptions::new(),
-                );
-                if result.is_ok() {
-                    trace!("Compiled file {}", &temp_file.to_str().unwrap());
-                } else {
-                    error!(
-                        "Failed to compile frame {} ({})",
-                        frame_idx,
-                        &temp_file.to_str().unwrap()
+                let temp_file = cache_subdir.join(format!("{:x}.tex", hash));
+
+                if write(&temp_file, &tex_content).is_ok() {
+                    let mut compiler = LatexCompiler::new()
+                        .unwrap()
+                        .add_arg("-shell-escape")
+                        .add_arg("-interaction=nonstopmode");
+                    compiler.working_dir = temp_file
+                        .parent()
+                        .unwrap()
+                        .canonicalize()
+                        .unwrap()
+                        .to_path_buf();
+
+                    let result = compiler.run(
+                        &temp_file.canonicalize().unwrap().to_string_lossy(),
+                        &latex_input,
+                        LatexRunOptions::new(),
                     );
-                    error!("{}", frames[frame_idx]);
-                    error!("{:?}", result.err());
-                };
+                    if result.is_ok() {
+                        trace!("Compiled file {}", &temp_file.to_str().unwrap());
+                    } else {
+                        error!(
+                            "Failed to compile frame {} ({})",
+                            frame_idx,
+                            &temp_file.to_str().unwrap()
+                        );
+                        error!("{}", frames[frame_idx]);
+                        error!("{:?}", result.err());
+                    };
+                }
             };
             progress_bar.inc(1);
         });
@@ -241,7 +259,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
     } else {
         if first_changed_frame < generated_documents.len() {
             let (hash, _) = generated_documents[first_changed_frame];
-            let compiled_pdf = cachedir.join(format!("{:x}.pdf", hash));
+            let compiled_pdf = cache_subdir.join(format!("{:x}.pdf", hash));
 
             if Path::new(&output_file).is_file() {
                 info!("Linking: {:?} -> {:?}", &compiled_pdf, &output_file);
