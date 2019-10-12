@@ -46,10 +46,40 @@ lazy_static! {
     static ref PREVIOUS_FRAMES: Mutex<Vec<String>> = Mutex::new(Vec::new());
 }
 
+fn show_error_slide(cachedir: &Path, output_file: &str) {
+    if Path::new(&output_file).is_file() {
+        let _result =
+            ::std::fs::remove_file(&output_file).expect("Tried to delete previous output file");
+    }
+
+    let error_frame = String::from_utf8_lossy(include_bytes!("error.tex")).to_owned();
+    let error_file = cachedir.join("error.tex");
+    let error_pdf = cachedir.join("error.pdf");
+    if !error_pdf.exists() && write(&error_file, &error_frame[..]).is_ok() {
+        let mut compiler = LatexCompiler::new()
+            .unwrap()
+            .add_arg("-shell-escape")
+            .add_arg("-interaction=nonstopmode");
+        compiler.working_dir = cachedir.to_owned();
+
+        let _result = compiler.run(
+            &error_file.canonicalize().unwrap().to_string_lossy(),
+            &LatexInput::new(),
+            LatexRunOptions::new(),
+        );
+    }
+    if error_pdf.exists() {
+        ::symlink::symlink_file(error_pdf, output_file)
+            .expect("Failed to create symlink to error file.");
+    }
+}
+
 pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
     let cwd = current_dir().unwrap();
     let input_path = Path::new(&input_file);
     let input_dir = input_path.parent().unwrap_or(&cwd);
+    let output_file = args.value_of("OUTPUT").unwrap_or("output.pdf");
+
     if !input_path.is_file() {
         error!("Could not open {}", input_file);
         return Err(FasterBeamerError::InputFileNotExistent);
@@ -153,7 +183,9 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
         match output {
             Err(e) => {
                 error!("Failed to compile preamble!\n{}", e);
-                *PREVIOUS_FRAMES.lock().unwrap() = frames;
+                show_error_slide(&cachedir, output_file);
+
+                *PREVIOUS_FRAMES.lock().unwrap() = Vec::new();
                 return Err(FasterBeamerError::CompileError);
             }
             Ok(output) if !output.status.success() => {
@@ -161,7 +193,9 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
                     "Failed to compile preamble! {}",
                     str::from_utf8(&output.stderr).unwrap()
                 );
-                *PREVIOUS_FRAMES.lock().unwrap() = frames;
+                show_error_slide(&cachedir, output_file);
+
+                *PREVIOUS_FRAMES.lock().unwrap() = Vec::new();
                 return Err(FasterBeamerError::CompileError);
             }
             _ => {}
@@ -253,8 +287,6 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
         });
     progress_bar.finish_and_clear();
 
-    let output_file = args.value_of("OUTPUT").unwrap_or("output.pdf");
-
     if args.is_present("unite") {
         info!("PDF unite!");
         let output = command.arg(output_file).output();
@@ -262,6 +294,8 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
         match output {
             Err(e) => {
                 error!("Failed to run pdf unite!\n{}", e);
+                show_error_slide(&cachedir, output_file);
+
                 *PREVIOUS_FRAMES.lock().unwrap() = frames;
                 return Err(FasterBeamerError::PdfUniteError);
             }
@@ -270,46 +304,32 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
                     "Failed to run pdfunite! {}",
                     str::from_utf8(&output.stderr).unwrap()
                 );
+                show_error_slide(&cachedir, output_file);
+
                 *PREVIOUS_FRAMES.lock().unwrap() = frames;
                 return Err(FasterBeamerError::PdfUniteError);
             }
             _ => {}
         };
     } else {
+        if first_changed_frame == generated_documents.len() {
+            first_changed_frame = 0;
+        }
         if first_changed_frame < generated_documents.len() {
             let (hash, _) = generated_documents[first_changed_frame];
             let compiled_pdf = cache_subdir.join(format!("{:x}.pdf", hash));
 
             if Path::new(&output_file).is_file() {
-                info!("Linking: {:?} -> {:?}", &compiled_pdf, &output_file);
                 let _result = ::std::fs::remove_file(&output_file)
                     .expect("Tried to delete previous output file");
             }
             if Path::new(&compiled_pdf).is_file() {
+                info!("Linking: {:?} -> {:?}", &compiled_pdf, &output_file);
                 ::symlink::symlink_file(compiled_pdf, output_file)
                     .expect("Failed to create symlink to output file.");
             } else {
                 error!("Compilation failed!");
-                let error_frame = String::from_utf8_lossy(include_bytes!("error.tex")).to_owned();
-                let error_file = cachedir.join("error.tex");
-                let error_pdf = cachedir.join("error.pdf");
-                if !error_pdf.exists() && write(&error_file, &error_frame[..]).is_ok() {
-                    let mut compiler = LatexCompiler::new()
-                        .unwrap()
-                        .add_arg("-shell-escape")
-                        .add_arg("-interaction=nonstopmode");
-                    compiler.working_dir = cachedir;
-
-                    let _result = compiler.run(
-                        &error_file.canonicalize().unwrap().to_string_lossy(),
-                        &LatexInput::new(),
-                        LatexRunOptions::new(),
-                    );
-                }
-                if error_pdf.exists() {
-                    ::symlink::symlink_file(error_pdf, output_file)
-                        .expect("Failed to create symlink to error file.");
-                }
+                show_error_slide(&cachedir, output_file);
 
                 *PREVIOUS_FRAMES.lock().unwrap() = frames;
                 return Err(FasterBeamerError::CompileError);
