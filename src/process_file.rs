@@ -79,6 +79,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
     let input_path = Path::new(&input_file);
     let input_dir = input_path.parent().unwrap_or(&cwd);
     let output_file = args.value_of("OUTPUT").unwrap_or("output.pdf");
+    let correct_frame_numbers = args.is_present("frame-numbers");
 
     if !input_path.is_file() {
         error!("Could not open {}", input_file);
@@ -204,10 +205,18 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
 
     let mut generated_documents = Vec::new();
     let mut command = &mut Command::new("pdfunite");
-    for f in &frames {
+    for (frame_idx, f) in frames.iter().enumerate() {
+        let frame_idx_str = if correct_frame_numbers {
+            format!("{}", frame_idx);
+        } else {
+            format!("{}", 0);
+        };
         let compile_string = format!("%&{}\n", preamble_filename)
             + &preamble
             + "\n\\begin{document}\n"
+            + "\\addtocounter{framenumber}{"
+            + &frame_idx_str
+            + "}\n"
             + &f
             + "\n\\end{document}\n";
 

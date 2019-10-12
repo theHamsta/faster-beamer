@@ -48,6 +48,12 @@ fn main() {
                 .help("Unites all slides to a PDF (default is only to output newest slide)"),
         )
         .arg(
+            Arg::with_name("frame-numbers")
+                .short("f")
+                .long("frame-numbers")
+                .help("Try to print correct frames numbers. This can harm cache performance when swapping frames."),
+        )
+        .arg(
             Arg::with_name("tree-sitter")
                 .short("t")
                 .long("tree-sitter")
