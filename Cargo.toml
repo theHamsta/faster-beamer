@@ -31,3 +31,8 @@ tempfile = "3.1.0"
 
 [build-dependencies]
 cc = { version = "1.0.45", features = ["parallel"] }
+
+[features]
+
+default = []
+tree-sitter-parsing = []

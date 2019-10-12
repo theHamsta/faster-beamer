@@ -47,6 +47,12 @@ lazy_static! {
 }
 
 pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
+    let use_treesitter = if cfg!(feature = "tree-sitter-parsing") {
+        args.is_present("tree-sitter")
+    } else {
+        false
+    };
+
     let cwd = current_dir().unwrap();
     let input_path = Path::new(&input_file);
     let input_dir = input_path.parent().unwrap_or(&cwd);
@@ -58,14 +64,14 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
     let parsed_file = parsing::ParsedFile::new(input_file.to_string());
     trace!("{}", parsed_file.syntax_tree.root_node().to_sexp());
 
-    let frame_nodes = if args.is_present("tree-sitter") {
+    let frame_nodes = if use_treesitter {
         get_frames(&parsed_file)
     } else {
         Vec::new()
     };
 
     let mut frames = Vec::with_capacity(frame_nodes.len());
-    if !frame_nodes.is_empty() {
+    if !frame_nodes.is_empty() && use_treesitter {
         for f in frame_nodes.iter() {
             info!("Found {} frames with tree-sitter.", frame_nodes.len());
             let node_string = parsed_file.get_node_string(&f);
@@ -79,7 +85,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
     }
     info!("Found {} frames.", frames.len());
 
-    if log_enabled!(Trace) && args.is_present("tree-sitter") {
+    if log_enabled!(Trace) && use_treesitter {
         let root_node = parsed_file.syntax_tree.root_node();
         let mut stack = vec![root_node];
 

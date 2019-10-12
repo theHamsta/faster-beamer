@@ -3,8 +3,8 @@ dist: bionic
 sudo: required
 cache: cargo
 script:
-  - cargo build --verbose --all
-  - cargo test --verbose --all
+  - cargo build --verbose --all --all-features
+  - cargo test --verbose --all --all-features
 rust:
   - stable
   - beta
