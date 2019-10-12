@@ -264,7 +264,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
             }
             Ok(output) if !output.status.success() => {
                 error!(
-                    "Failed to compile preamble! {}",
+                    "Failed to run pdfunite! {}",
                     str::from_utf8(&output.stderr).unwrap()
                 );
                 return Err(FasterBeamerError::PdfUniteError);
