@@ -20,6 +20,7 @@ use std::env::current_dir;
 use std::fs::write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::str;
 use std::sync::Mutex;
 use std::vec::Vec;
 
@@ -155,7 +156,10 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
                 return Err(FasterBeamerError::CompileError);
             }
             Ok(output) if !output.status.success() => {
-                error!("Failed to compile preamble! {:?}", output.stderr);
+                error!(
+                    "Failed to compile preamble! {}",
+                    str::from_utf8(&output.stderr).unwrap()
+                );
                 return Err(FasterBeamerError::CompileError);
             }
             _ => {}
@@ -259,7 +263,10 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
                 return Err(FasterBeamerError::PdfUniteError);
             }
             Ok(output) if !output.status.success() => {
-                error!("Failed to compile preamble! {:?}", output.stderr);
+                error!(
+                    "Failed to compile preamble! {}",
+                    str::from_utf8(&output.stderr).unwrap()
+                );
                 return Err(FasterBeamerError::PdfUniteError);
             }
             _ => {}
