@@ -207,9 +207,9 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
     let mut command = &mut Command::new("pdfunite");
     for (frame_idx, f) in frames.iter().enumerate() {
         let frame_idx_str = if correct_frame_numbers {
-            format!("{}", frame_idx);
+            format!("{}", frame_idx)
         } else {
-            format!("{}", 0);
+            format!("{}", 0)
         };
         let compile_string = format!("%&{}\n", preamble_filename)
             + &preamble
