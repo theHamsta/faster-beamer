@@ -27,6 +27,7 @@ use std::vec::Vec;
 pub enum FasterBeamerError {
     InputFileNotExistent,
     CompileError,
+    PdfUniteError,
 }
 
 pub type Result<T> = ::std::result::Result<T, FasterBeamerError>;
@@ -250,12 +251,19 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
 
     if args.is_present("unite") {
         info!("PDF unite!");
-        let output = command
-            .arg(output_file)
-            .output()
-            .expect("failed to execute process");
+        let output = command.arg(output_file).output();
 
-        error!("{}", String::from_utf8_lossy(&output.stdout));
+        match output {
+            Err(e) => {
+                error!("Failed to run pdf unite!\n{}", e);
+                return Err(FasterBeamerError::PdfUniteError);
+            }
+            Ok(output) if !output.status.success() => {
+                error!("Failed to compile preamble! {:?}", output.stderr);
+                return Err(FasterBeamerError::PdfUniteError);
+            }
+            _ => {}
+        };
     } else {
         if first_changed_frame < generated_documents.len() {
             let (hash, _) = generated_documents[first_changed_frame];
