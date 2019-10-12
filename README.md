@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/theHamsta/faster-beamer.svg?branch=master)](https://travis-ci.org/theHamsta/faster-beamer)
+
 # faster-beamer
 
 An incremental compiler for LaTeX Beamer slides
@@ -29,7 +31,8 @@ faster-beamer presentation.tex --server --unite
 
 ## Requirements
 
-You need to have `pdflatex` in `PATH`. Addidionally, also `pdfunite` if you want to unite PDFs.
+    - A Rust toolchain >= 3.39
+    - You need to have `pdflatex` in `PATH`. Addidionally, also `pdfunite` if you want to unite PDFs.
 
 ## Installation
 
