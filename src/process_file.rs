@@ -133,9 +133,17 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
             .arg("\"&pdflatex\"")
             .arg("mylatexformat.ltx")
             .arg(&input_file)
-            .output()
-            .expect("Failed to compile preamble");
-        error!("{}", String::from_utf8_lossy(&output.stderr));
+            .output();
+        match output {
+            Err(e) => {
+                error!("Failed to compile preamble!\n{}", e);
+                return;
+            }
+            Ok(output) if !output.status.success() => {
+                error!("Failed to compile preamble! {:?}", output.stderr);
+            }
+            _ => {}
+        };
     }
 
     let mut generated_documents = Vec::new();
@@ -174,7 +182,8 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
 
     generated_documents
         .par_iter()
-        .for_each(|(hash, tex_content)| {
+        .enumerate()
+        .for_each(|(frame_idx, (hash, tex_content))| {
             let pdf = cachedir.join(format!("{:x}.pdf", hash));
 
             if pdf.is_file() {
@@ -195,16 +204,20 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
                     LatexRunOptions::new(),
                 );
                 if result.is_ok() {
-                    assert!(write(&pdf, &result.unwrap()).is_ok());
-                    trace!("Compiled file {}", &temp_file.to_str().unwrap())
+                    trace!("Compiled file {}", &temp_file.to_str().unwrap());
                 } else {
-                    error!("Failed to compile frame ({})", &temp_file.to_str().unwrap());
+                    error!(
+                        "Failed to compile frame {} ({})",
+                        frame_idx,
+                        &temp_file.to_str().unwrap()
+                    );
+                    error!("{}", frames[frame_idx]);
                     error!("{:?}", result.err());
                 };
             };
             progress_bar.inc(1);
         });
-    progress_bar.set_position(generated_documents.len() as u64);
+    progress_bar.finish_and_clear();
 
     let output_file = args.value_of("OUTPUT").unwrap_or("output.pdf");
 
@@ -220,9 +233,9 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
         if first_changed_frame < generated_documents.len() {
             let (hash, _) = generated_documents[first_changed_frame];
             let compiled_pdf = cachedir.join(format!("{:x}.pdf", hash));
-            info!("Linking: {:?} -> {:?}", &compiled_pdf, &output_file);
 
             if Path::new(&output_file).is_file() {
+                info!("Linking: {:?} -> {:?}", &compiled_pdf, &output_file);
                 let _result = ::std::fs::remove_file(&output_file)
                     .expect("Tried to delete previous output file");
             }
