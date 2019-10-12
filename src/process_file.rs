@@ -23,6 +23,14 @@ use std::process::Command;
 use std::sync::Mutex;
 use std::vec::Vec;
 
+#[derive(PartialEq)]
+pub enum FasterBeamerError {
+    InputFileNotExistent,
+    CompileError,
+}
+
+pub type Result<T> = ::std::result::Result<T, FasterBeamerError>;
+
 lazy_static! {
     static ref FRAME_REGEX: Regex =
         Regex::new(r"(?ms)^\\begin\{frame\}.*?^\\end\{frame\}").unwrap();
@@ -36,11 +44,11 @@ lazy_static! {
     static ref PREVIOUS_FRAMES: Mutex<Vec<String>> = Mutex::new(Vec::new());
 }
 
-pub fn process_file(input_file: &str, args: &ArgMatches) {
+pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
     let input_path = Path::new(&input_file);
     if !input_path.is_file() {
         error!("Could not open {}", input_file);
-        return;
+        return Err(FasterBeamerError::InputFileNotExistent);
     }
 
     let parsed_file = parsing::ParsedFile::new(input_file.to_string());
@@ -137,10 +145,11 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
         match output {
             Err(e) => {
                 error!("Failed to compile preamble!\n{}", e);
-                return;
+                return Err(FasterBeamerError::CompileError);
             }
             Ok(output) if !output.status.success() => {
                 error!("Failed to compile preamble! {:?}", output.stderr);
+                return Err(FasterBeamerError::CompileError);
             }
             _ => {}
         };
@@ -244,9 +253,11 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
                     .expect("Failed to create symlink to output file.");
             } else {
                 error!("Compilation failed!");
+                return Err(FasterBeamerError::CompileError);
             }
         }
     }
 
     *PREVIOUS_FRAMES.lock().unwrap() = frames;
+    Ok(())
 }

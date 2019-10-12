@@ -67,7 +67,10 @@ fn main() {
         .expect("Could not determine parent directory of input file");
 
     info!("Processing {:?}.", input_file);
-    process_file::process_file(input_file, &matches);
+    let result = process_file::process_file(input_file, &matches);
+    if result == Err(process_file::FasterBeamerError::InputFileNotExistent) {
+        std::process::exit(-1);
+    };
 
     if is_server_mode {
         use hotwatch::{Event, Hotwatch};
@@ -84,7 +87,7 @@ fn main() {
                         (Ok(file), Ok(changed_file)) if file == changed_file => {
                             let path_str = file.to_str().unwrap();
                             info!("Processing {:?}.", &path_str);
-                            process_file::process_file(path_str, &matches);
+                            let _result = process_file::process_file(path_str, &matches);
                         }
                         _ => {}
                     }
