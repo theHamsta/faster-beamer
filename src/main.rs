@@ -26,7 +26,7 @@ fn main() {
     }
 
     let matches = App::new("faster-beamer")
-        .version("1.0")
+        .version("0.1.1")
         .author("Stephan Seitz <stephan.seitz@fau.de>")
         .about("Incremental compiler for Beamer LaTeX presentations")
         .arg(
