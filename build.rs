@@ -6,14 +6,14 @@
 extern crate cc;
 
 fn main() {
-    #[cfg(not(feature = "tree-sitter-parsing"))]
+    #[cfg(feature = "tree-sitter-parsing")]
     cc::Build::new()
         .include("tree-sitter-latex/src")
         .file("tree-sitter-latex/src/parser.c")
         .flag_if_supported("-w") // disable warnings
         .compile("tree-sitter-latex");
 
-    #[cfg(not(feature = "tree-sitter-parsing"))]
+    #[cfg(feature = "tree-sitter-parsing")]
     cc::Build::new()
         .file("tree-sitter-latex/src/scanner.cc")
         .file("tree-sitter-latex/src/catcode.cc")
