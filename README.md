@@ -6,7 +6,7 @@ An incremental compiler for LaTeX Beamer slides
 
 ## Motivation
 
-Compiling Beamer slides takes to long.
+Compiling Beamer slides takes too long.
 I wanted to have a fast preview of my files even if the output is not 100% correct.
 
 ## What it does
