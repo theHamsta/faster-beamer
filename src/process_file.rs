@@ -10,6 +10,7 @@ use log::Level::Trace;
 
 use cachedir::CacheDirConfig;
 use clap::ArgMatches;
+use indicatif::ProgressBar;
 use latexcompile::{LatexCompiler, LatexInput, LatexRunOptions};
 use md5;
 use rayon;
@@ -169,13 +170,15 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
         frames.len()
     );
 
+    let progress_bar = ProgressBar::new(generated_documents.len() as u64);
+
     generated_documents
         .par_iter()
         .for_each(|(hash, tex_content)| {
             let pdf = cachedir.join(format!("{:x}.pdf", hash));
 
             if pdf.is_file() {
-                debug!("{} is already compiled!", pdf.to_str().unwrap_or("???"));
+                trace!("{} is already compiled!", pdf.to_str().unwrap_or("???"));
             } else {
                 let temp_file = cachedir.join(format!("{:x}.tex", hash));
                 assert!(write(&temp_file, &tex_content).is_ok());
@@ -193,13 +196,15 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
                 );
                 if result.is_ok() {
                     assert!(write(&pdf, &result.unwrap()).is_ok());
-                    info!("Compiled file {}", &temp_file.to_str().unwrap())
+                    trace!("Compiled file {}", &temp_file.to_str().unwrap())
                 } else {
                     error!("Failed to compile frame ({})", &temp_file.to_str().unwrap());
                     error!("{:?}", result.err());
                 };
             };
+            progress_bar.inc(1);
         });
+    progress_bar.set_position(generated_documents.len() as u64);
 
     let output_file = args.value_of("OUTPUT").unwrap_or("output.pdf");
 
@@ -218,8 +223,8 @@ pub fn process_file(input_file: &str, args: &ArgMatches) {
             info!("Linking: {:?} -> {:?}", &compiled_pdf, &output_file);
 
             if Path::new(&output_file).is_file() {
-                let _result =
-                    ::std::fs::remove_file(&output_file).expect("Tried to delete previous output file");
+                let _result = ::std::fs::remove_file(&output_file)
+                    .expect("Tried to delete previous output file");
             }
             if Path::new(&compiled_pdf).is_file() {
                 ::symlink::symlink_file(compiled_pdf, output_file)
