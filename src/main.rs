@@ -77,18 +77,20 @@ fn main() {
         hotwatch
             .watch(input_path, move |event: Event| match event {
                 Event::Write(file) | Event::NoticeRemove(file) => {
-                    info!("{:?} has changed.", file);
+                    trace!("{:?} has changed.", file);
                     thread::sleep(time::Duration::from_millis(50));
                     let input_file = matches.value_of("INPUT").unwrap();
-                    if Path::new(&input_file).canonicalize().unwrap()
-                        == file.canonicalize().unwrap()
-                    {
-                        info!("Processing {:?}.", file);
-                        process_file::process_file(input_file, &matches);
+                    match (Path::new(&input_file).canonicalize(), file.canonicalize()) {
+                        (Ok(file), Ok(changed_file)) if file == changed_file => {
+                            let path_str = file.to_str().unwrap();
+                            info!("Processing {:?}.", &path_str);
+                            process_file::process_file(path_str, &matches);
+                        }
+                        _ => {}
                     }
                 }
                 _ => {
-                    info!("{:?}", event);
+                    trace!("{:?}", event);
                 }
             })
             .expect("Failed to watch file!");
