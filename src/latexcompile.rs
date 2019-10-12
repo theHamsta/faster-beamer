@@ -52,6 +52,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::str;
 use tempfile::tempdir;
 
 pub struct LatexRunOptions {
@@ -71,6 +72,8 @@ impl LatexRunOptions {
 /// Specify all error cases with the fail api.
 #[derive(Fail, Debug)]
 pub enum LatexError {
+    #[fail(display = "General failure: {}.", _0)]
+    LatexError(String),
     #[fail(display = "Failed to convert input {}", _0)]
     Input(#[cause] std::io::Error),
     #[fail(display = "{}", _0)]
@@ -268,7 +271,15 @@ impl LatexCompiler {
         assert!(options.capture_stdout);
 
         // first and second run
-        let _err_code = self.get_cmd(main).output().map_err(LatexError::Io)?;
+        let output = self.get_cmd(main).output().map_err(LatexError::Io)?;
+        if !output.status.success() {
+            let err_msg = str::from_utf8(&output.stderr).unwrap().to_string();
+            let std_out = str::from_utf8(&output.stdout).unwrap().to_string();
+
+            error!("{}", &err_msg);
+            error!("{}", &std_out);
+            return Err(LatexError::LatexError(err_msg));
+        };
         if options.double_compilation {
             let _err_code = self.get_cmd(main).output().map_err(LatexError::Io)?;
         }
@@ -279,4 +290,3 @@ impl LatexCompiler {
         Ok(self.working_dir.join(stem.with_extension("pdf")))
     }
 }
-

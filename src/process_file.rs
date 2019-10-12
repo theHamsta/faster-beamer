@@ -243,7 +243,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
                             &temp_file.to_str().unwrap()
                         );
                         error!("{}", frames[frame_idx]);
-                        error!("{:?}", result.err());
+                        error!("{}", result.err().unwrap());
                     };
                 }
             };
