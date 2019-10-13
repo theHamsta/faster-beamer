@@ -298,6 +298,10 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
 
     if args.is_present("unite") {
         info!("PDF unite!");
+        if Path::new(&output_file).is_file() {
+            let _result =
+                ::std::fs::remove_file(&output_file).expect("Tried to delete previous output file");
+        }
         let output = command.arg(output_file).output();
 
         match output {
