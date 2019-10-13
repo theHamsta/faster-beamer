@@ -296,12 +296,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
         });
     progress_bar.finish_and_clear();
 
-    if args.is_present("unite") {
-        info!("PDF unite!");
-        if Path::new(&output_file).is_file() {
-            let _result =
-                ::std::fs::remove_file(&output_file).expect("Tried to delete previous output file");
-        }
+    if args.is_present("pdfunite") {
         let output = command.arg(output_file).output();
 
         match output {
@@ -324,6 +319,71 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
             }
             _ => {}
         };
+    } else if args.is_present("unite") {
+        info!("Pasting precompiled frames into original document!");
+        if Path::new(&output_file).is_file() {
+            let _result =
+                ::std::fs::remove_file(&output_file).expect("Tried to delete previous output file");
+        }
+
+        let mut united_tex = format!(
+            "{}\n{}",
+            "\\RequirePackage{pdfpages}", parsed_file.file_content
+        );
+        for (f, (hash, _)) in frames.iter().zip(generated_documents) {
+            let pdf = format!("{:x}.pdf", hash);
+            united_tex = united_tex.replacen(
+                f,
+                &format!("{{\\setbeamercolor{{background canvas}}{{bg=}}\n\\includepdf[pages=-]{{{}}}\n}}", &pdf),
+                1,
+            );
+        }
+
+        let united_tex_file = cache_subdir
+            .join("united.tex")
+            .canonicalize()
+            .unwrap_or(PathBuf::new());
+        let united_pdf = cache_subdir.join("united.pdf");
+        if write(&united_tex_file, united_tex).is_ok() {
+            let mut compiler = LatexCompiler::new()
+                .unwrap()
+                .add_arg("-shell-escape")
+                .add_arg("-interaction=nonstopmode");
+            compiler.working_dir = cache_subdir.to_owned();
+
+            let compile_result = compiler.run(
+                &united_tex_file.canonicalize().unwrap().to_string_lossy(),
+                &LatexInput::new(),
+                LatexRunOptions::new(),
+            );
+
+            if compile_result.is_err() {
+                error!(
+                    "Failed to run pdf unite!\n{}",
+                    compile_result.err().unwrap()
+                );
+            }
+
+            if united_pdf.is_file() {
+                if Path::new(&output_file).is_file() {
+                    let _result = ::std::fs::remove_file(&output_file)
+                        .expect("Tried to delete previous output file");
+                }
+                if Path::new(&united_pdf).is_file() {
+                    info!("Linking: {:?} -> {:?}", &united_pdf, &output_file);
+                    ::symlink::symlink_file(united_pdf, output_file)
+                        .expect("Failed to create symlink to output file.");
+                } else {
+                    error!("Compilation failed!");
+                    show_error_slide(&cachedir, output_file);
+
+                    *PREVIOUS_FRAMES.lock().unwrap() = frames;
+                    return Err(FasterBeamerError::CompileError);
+                }
+            } else {
+                return Err(FasterBeamerError::PdfUniteError);
+            }
+        }
     } else {
         if first_changed_frame == generated_documents.len() {
             first_changed_frame = 0;

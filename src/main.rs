@@ -49,6 +49,11 @@ fn main() {
                 .help("Unites all slides to a PDF (default is only to output newest slide)"),
         )
         .arg(
+            Arg::with_name("pdfunite")
+                .long("pdfunite")
+                .help("Unites all slides to a PDF using pdfunite"),
+        )
+        .arg(
             Arg::with_name("frame-numbers")
                 .short("f")
                 .long("frame-numbers")
