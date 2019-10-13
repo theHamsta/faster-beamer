@@ -20,7 +20,7 @@ fn main() {
     pretty_env_logger::init();
 
     let matches = App::new("faster-beamer")
-        .version("0.1.2")
+        .version("0.1.3")
         .author("Stephan Seitz <stephan.seitz@fau.de>")
         .about("Incremental compiler for Beamer LaTeX presentations")
         .arg(
