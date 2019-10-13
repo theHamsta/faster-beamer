@@ -48,8 +48,7 @@ lazy_static! {
 
 fn show_error_slide(cachedir: &Path, output_file: &str) {
     if Path::new(&output_file).is_file() {
-        let _result =
-            ::std::fs::remove_file(&output_file).expect("Tried to delete previous output file");
+        let _result = ::std::fs::remove_file(&output_file);
     }
 
     let error_frame = String::from_utf8_lossy(include_bytes!("error.tex")).to_owned();
