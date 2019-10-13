@@ -50,6 +50,7 @@ fn main() {
         )
         .arg(
             Arg::with_name("pdfunite")
+                .short("x")
                 .long("pdfunite")
                 .help("Unites all slides to a PDF using pdfunite"),
         )
