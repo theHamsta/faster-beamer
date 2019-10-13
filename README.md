@@ -27,6 +27,13 @@ faster-beamer presentation.tex --server
 If you want pdfunite to glue all the compiled frames together use:
 
 ```bash
+faster-beamer presentation.tex --server --pdfunite
+```
+
+We can also try to reinsert the precompiled frames into the orginal document. 
+This will yield the most accurate result (including title, section pages). 
+
+```bash
 faster-beamer presentation.tex --server --unite
 ```
 
