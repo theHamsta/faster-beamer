@@ -77,7 +77,11 @@ fn show_error_slide(cachedir: &Path, output_file: &str) {
 pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
     let cwd = current_dir().unwrap();
     let input_path = Path::new(&input_file);
-    let input_dir = input_path.parent().unwrap_or(&cwd);
+    let input_dir = input_path
+        .parent()
+        .unwrap_or(&cwd)
+        .canonicalize()
+        .unwrap_or(cwd.to_owned());
     let output_file = args.value_of("OUTPUT").unwrap_or("output.pdf");
     let correct_frame_numbers = args.is_present("frame-numbers");
 
@@ -154,10 +158,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
         .get_cache_dir()
         .unwrap()
         .into();
-    let cache_subdir = cachedir.join(format!(
-        "./{}",
-        &input_dir.canonicalize().unwrap().to_str().unwrap()
-    ));
+    let cache_subdir = cachedir.join(format!("./{}", &input_dir.to_str().unwrap()));
 
     let preamble_hash = md5::compute(&preamble);
     let preamble_filename = format!("{:x}_{}", preamble_hash, args.is_present("draft"));

@@ -12,6 +12,7 @@ mod process_file;
 mod tree_traversal;
 
 use clap::{App, Arg};
+use std::env::current_dir;
 use std::path::Path;
 use std::{thread, time};
 
@@ -66,9 +67,13 @@ fn main() {
 
     let is_server_mode = matches.is_present("server");
     let input_file = matches.value_of("INPUT").unwrap();
-    let input_path = Path::new(input_file)
+
+    let cwd = current_dir().unwrap();
+    let input_dir = Path::new(input_file)
         .parent()
-        .expect("Could not determine parent directory of input file");
+        .unwrap_or(&cwd)
+        .canonicalize()
+        .unwrap_or(cwd.to_owned());
 
     info!("Processing {:?}.", input_file);
     let result = process_file::process_file(input_file, &matches);
@@ -82,7 +87,7 @@ fn main() {
 
         let mut hotwatch = Hotwatch::new().expect("Hotwatch failed to initialize.");
         hotwatch
-            .watch(input_path, move |event: Event| match event {
+            .watch(input_dir, move |event: Event| match event {
                 Event::Write(file) | Event::NoticeRemove(file) => {
                     trace!("{:?} has changed.", file);
                     thread::sleep(time::Duration::from_millis(50));
