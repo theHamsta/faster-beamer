@@ -364,24 +364,20 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
                 );
             }
 
-            if united_pdf.is_file() {
-                if Path::new(&output_file).is_file() {
-                    let _result = ::std::fs::remove_file(&output_file)
-                        .expect("Tried to delete previous output file");
-                }
-                if Path::new(&united_pdf).is_file() {
-                    info!("Linking: {:?} -> {:?}", &united_pdf, &output_file);
-                    ::symlink::symlink_file(united_pdf, output_file)
-                        .expect("Failed to create symlink to output file.");
-                } else {
-                    error!("Compilation failed!");
-                    show_error_slide(&cachedir, output_file);
-
-                    *PREVIOUS_FRAMES.lock().unwrap() = frames;
-                    return Err(FasterBeamerError::CompileError);
-                }
+            if Path::new(&output_file).is_file() {
+                let _result = ::std::fs::remove_file(&output_file)
+                    .expect("Tried to delete previous output file");
+            }
+            if Path::new(&united_pdf).is_file() {
+                info!("Linking: {:?} -> {:?}", &united_pdf, &output_file);
+                ::symlink::symlink_file(united_pdf, output_file)
+                    .expect("Failed to create symlink to output file.");
             } else {
-                return Err(FasterBeamerError::PdfUniteError);
+                error!("Compilation failed!");
+                show_error_slide(&cachedir, output_file);
+
+                *PREVIOUS_FRAMES.lock().unwrap() = frames;
+                return Err(FasterBeamerError::CompileError);
             }
         }
     } else {
