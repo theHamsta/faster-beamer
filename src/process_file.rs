@@ -339,12 +339,10 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
             );
         }
 
-        let united_tex_file = cache_subdir
-            .join("united.tex")
-            .canonicalize()
-            .unwrap_or(PathBuf::new());
+        let united_tex_file = cache_subdir.join("united.tex");
         let united_pdf = cache_subdir.join("united.pdf");
-        if write(&united_tex_file, united_tex).is_ok() {
+        let write_result = write(&united_tex_file, united_tex);
+        if write_result.is_ok() {
             let mut compiler = LatexCompiler::new()
                 .unwrap()
                 .add_arg("-shell-escape")
@@ -379,6 +377,9 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
                 *PREVIOUS_FRAMES.lock().unwrap() = frames;
                 return Err(FasterBeamerError::CompileError);
             }
+        } else {
+            error!("Failed to write united.tex: {:?}", write_result.err());
+            return Err(FasterBeamerError::PdfUniteError);
         }
     } else {
         if first_changed_frame == generated_documents.len() {
