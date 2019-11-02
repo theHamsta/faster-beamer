@@ -35,11 +35,11 @@ pub type Result<T> = ::std::result::Result<T, FasterBeamerError>;
 
 lazy_static! {
     static ref FRAME_REGEX: Regex =
-        Regex::new(r"(?ms)^\\begin\{frame\}.*?^\\end\{frame\}").unwrap();
+        Regex::new(r"(?ms)^[\s\t]*?\\begin\{frame\}.*?^[\s\t]*?\\end\{frame\}").unwrap();
 }
 lazy_static! {
     static ref DOCUMENT_REGEX: Regex =
-        Regex::new(r"(?ms)^\\begin\{document\}.*^\\end\{document\}").unwrap();
+        Regex::new(r"(?ms)^[\s\t]*?\\begin\{document\}.*^[\s\t]*?\\end\{document\}").unwrap();
 }
 
 lazy_static! {
