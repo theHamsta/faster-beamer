@@ -108,6 +108,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
     } else {
         for cap in FRAME_REGEX.captures_iter(&parsed_file.file_content) {
             let frame_string = cap[0].to_string();
+            trace!("Frame {}:\n{}", frames.len() + 1, &frame_string);
             frames.push(frame_string);
         }
     }
