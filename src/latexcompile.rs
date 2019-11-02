@@ -152,7 +152,13 @@ impl LatexInput {
 
     pub fn add_file_lazy(&mut self, file: PathBuf, dest_path: &Path) -> Result<()> {
         if file.is_file() {
-            let dest_file = dest_path.join(format!("./{}", &file.to_str().unwrap()));
+            let dest_file = dest_path.join(format!(
+                "./{}",
+                &file
+                    .to_str()
+                    .unwrap() // append input to cachedir
+                    .replace(":", "_") // Escape forbidden characters like ..cache_dir/c:/
+            ));
             if !&dest_file.exists() {
                 match &dest_file.parent() {
                     Some(p) => fs::create_dir_all(p).map_err(LatexError::Io)?,
@@ -166,7 +172,13 @@ impl LatexInput {
 
     pub fn add_folder_lazy(&mut self, folder: PathBuf, dest_path: &Path) -> Result<()> {
         if folder.is_dir() {
-            let dest_folder = dest_path.join(format!("./{}", &folder.to_str().unwrap()));
+            let dest_folder = dest_path.join(format!(
+                "./{}",
+                &folder
+                    .to_str()
+                    .unwrap() // append input to cachedir
+                    .replace(":", "_") // Escape forbidden characters like ..cache_dir/c:/
+            ));
             if !&dest_folder.exists() {
                 match &dest_folder.parent() {
                     Some(p) => fs::create_dir_all(p).map_err(LatexError::Io)?,

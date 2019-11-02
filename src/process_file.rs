@@ -68,6 +68,10 @@ fn show_error_slide(cachedir: &Path, output_file: &str) {
         );
     }
     if error_pdf.exists() {
+        if Path::new(&output_file).is_file() {
+            let _result = ::std::fs::remove_file(&output_file);
+        }
+
         ::symlink::symlink_file(error_pdf, output_file)
             .expect("Failed to create symlink to error file.");
     }
@@ -158,7 +162,13 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
         .get_cache_dir()
         .unwrap()
         .into();
-    let cache_subdir = cachedir.join(format!("./{}", &input_dir.to_str().unwrap()));
+    let cache_subdir = cachedir.join(format!(
+        "./{}",
+        &input_dir
+            .to_str()
+            .unwrap() // append input to cachedir
+            .replace(":", "_") // Escape forbidden characters like ..cache_dir/c:/
+    ));
 
     let preamble_hash = md5::compute(&preamble);
     let preamble_filename = format!("{:x}_{}", preamble_hash, args.is_present("draft"));
