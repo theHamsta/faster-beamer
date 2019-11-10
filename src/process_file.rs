@@ -35,11 +35,11 @@ pub type Result<T> = ::std::result::Result<T, FasterBeamerError>;
 
 lazy_static! {
     static ref FRAME_REGEX: Regex =
-        Regex::new(r"(?ms)^\\begin\{frame\}.*?^\\end\{frame\}").unwrap();
+        Regex::new(r"(?ms)^[\s\t]*?\\begin\{frame\}.*?^[\s\t]*?\\end\{frame\}").unwrap();
 }
 lazy_static! {
     static ref DOCUMENT_REGEX: Regex =
-        Regex::new(r"(?ms)^\\begin\{document\}.*^\\end\{document\}").unwrap();
+        Regex::new(r"(?ms)^[\s\t]*?\\begin\{document\}.*^[\s\t]*?\\end\{document\}").unwrap();
 }
 
 lazy_static! {
@@ -68,6 +68,10 @@ fn show_error_slide(cachedir: &Path, output_file: &str) {
         );
     }
     if error_pdf.exists() {
+        if Path::new(&output_file).is_file() {
+            let _result = ::std::fs::remove_file(&output_file);
+        }
+
         ::symlink::symlink_file(error_pdf, output_file)
             .expect("Failed to create symlink to error file.");
     }
@@ -108,6 +112,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
     } else {
         for cap in FRAME_REGEX.captures_iter(&parsed_file.file_content) {
             let frame_string = cap[0].to_string();
+            trace!("Frame {}:\n{}", frames.len() + 1, &frame_string);
             frames.push(frame_string);
         }
     }
@@ -157,7 +162,13 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
         .get_cache_dir()
         .unwrap()
         .into();
-    let cache_subdir = cachedir.join(format!("./{}", &input_dir.to_str().unwrap()));
+    let cache_subdir = cachedir.join(format!(
+        "./{}",
+        &input_dir
+            .to_str()
+            .unwrap() // append input to cachedir
+            .replace(":", "_") // Escape forbidden characters like ..cache_dir/c:/
+    ));
 
     let preamble_hash = md5::compute(&preamble);
     let preamble_filename = format!("{:x}_{}", preamble_hash, args.is_present("draft"));
