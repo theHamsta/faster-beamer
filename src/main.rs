@@ -31,9 +31,9 @@ fn main() {
         .author("Stephan Seitz <stephan.seitz@fau.de>")
         .about("Incremental compiler for Beamer LaTeX presentations")
         .arg(
-            Arg::with_name("server")
-                .short("s")
-                .long("server")
+            Arg::with_name("watch")
+                .short("w")
+                .long("watch")
                 .help("Sets a custom config file"),
         )
         .arg(
@@ -78,7 +78,7 @@ fn main() {
         //)
         .get_matches();
 
-    let is_server_mode = matches.is_present("server");
+    let is_watch_mode = matches.is_present("watch");
     let input_file = matches.value_of("INPUT").unwrap();
 
     let cwd = current_dir().unwrap();
@@ -94,7 +94,7 @@ fn main() {
         std::process::exit(-1);
     };
 
-    if is_server_mode {
+    if is_watch_mode {
         use hotwatch::{Event, Hotwatch};
         let matches = matches.clone();
 
@@ -119,7 +119,7 @@ fn main() {
                 }
             })
             .expect("Failed to watch file!");
-        info!("Server mode");
+        info!("Watch mode");
         info!("Watching {}", input_file);
 
         loop {
