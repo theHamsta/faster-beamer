@@ -54,6 +54,7 @@ fn show_error_slide(cachedir: &Path, output_file: &str) {
     let error_frame = String::from_utf8_lossy(include_bytes!("error.tex")).to_owned();
     let error_file = cachedir.join("error.tex");
     let error_pdf = cachedir.join("error.pdf");
+
     if !error_pdf.exists() && write(&error_file, &error_frame[..]).is_ok() {
         let mut compiler = LatexCompiler::new()
             .unwrap()
