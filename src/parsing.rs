@@ -61,7 +61,7 @@ mod tests {
 
         for l in languages {
             for i in 0..l.node_kind_count() {
-                println!("{}", l.node_kind_for_id(i as u16));
+                //println!("{}", l.node_kind_for_id(i as u16));
             }
         }
     }
