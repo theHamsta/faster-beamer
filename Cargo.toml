@@ -15,7 +15,7 @@ readme = "README.md"
 tree-sitter = "0.6.3"
 dirs = "2.0.2"
 lazy_static = "1.4.0"
-clap = "2.33.0"
+clap = "2.33.1"
 hotwatch = "0.4.3"
 log = { version = "0.4.8", features = ["max_level_trace", "release_max_level_info"] }
 pretty_env_logger = "0.4.0"
