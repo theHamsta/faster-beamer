@@ -12,7 +12,7 @@ categories = ["Latex"]
 readme = "README.md"
 
 [dependencies]
-tree-sitter = "0.6.3"
+tree-sitter = "0.16.0"
 dirs = "2.0.2"
 lazy_static = "1.4.0"
 clap = "2.33.1"
