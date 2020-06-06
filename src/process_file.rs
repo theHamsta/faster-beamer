@@ -12,8 +12,6 @@ use crate::latexcompile::{LatexCompiler, LatexInput, LatexRunOptions};
 use cachedir::CacheDirConfig;
 use clap::ArgMatches;
 use indicatif::ProgressBar;
-use md5;
-use rayon;
 use rayon::prelude::*;
 use regex::Regex;
 use std::env::current_dir;
@@ -85,7 +83,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
         .parent()
         .unwrap_or(&cwd)
         .canonicalize()
-        .unwrap_or(cwd.to_owned());
+        .unwrap_or_else(|_| cwd.to_owned());
     let output_file = args.value_of("OUTPUT").unwrap_or("output.pdf");
     let correct_frame_numbers = args.is_present("frame-numbers");
 
@@ -157,7 +155,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
         Some(x) => Some(parsed_file.file_content[..x].to_owned()),
         None => None,
     }
-    .unwrap_or(r"\documentclass[aspectratio=43,c,xcolor=dvipsnames]{beamer}".to_string());
+    .unwrap_or_else(|| r"\documentclass[aspectratio=43,c,xcolor=dvipsnames]{beamer}".to_string());
 
     let cachedir: PathBuf = CacheDirConfig::new("faster-beamer")
         .get_cache_dir()
@@ -279,12 +277,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
                         .unwrap()
                         .add_arg("-shell-escape")
                         .add_arg("-interaction=nonstopmode");
-                    compiler.working_dir = temp_file
-                        .parent()
-                        .unwrap()
-                        .canonicalize()
-                        .unwrap()
-                        .to_path_buf();
+                    compiler.working_dir = temp_file.parent().unwrap().canonicalize().unwrap();
 
                     let result = compiler.run(
                         &temp_file.canonicalize().unwrap().to_string_lossy(),
@@ -359,7 +352,7 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
                 .unwrap()
                 .add_arg("-shell-escape")
                 .add_arg("-interaction=nonstopmode");
-            compiler.working_dir = cache_subdir.to_owned();
+            compiler.working_dir = cache_subdir;
 
             let compile_result = compiler.run(
                 &united_tex_file.canonicalize().unwrap().to_string_lossy(),

@@ -33,7 +33,7 @@ pub fn get_nodes_of_type(root_node: Node, node_type: String, return_first_only: 
     results
 }
 
-pub fn get_children<'a, 'b>(
+pub fn get_children<'a>(
     root_node: Node<'a>,
     predicate: &dyn Fn(Node<'a>) -> bool,
     return_first_only: bool,

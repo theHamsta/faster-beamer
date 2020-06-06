@@ -86,7 +86,7 @@ fn main() {
         .parent()
         .unwrap_or(&cwd)
         .canonicalize()
-        .unwrap_or(cwd.to_owned());
+        .unwrap_or_else(|_| cwd.to_owned());
 
     info!("Processing {:?}.", input_file);
     let result = process_file::process_file(input_file, &matches);

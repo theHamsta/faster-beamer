@@ -31,7 +31,7 @@
 //! use std::fs::write;
 //! use latexcompile::{LatexCompiler, LatexInput, LatexError};
 //!
-//! fn main() {
+//! 
 //!     // create the template map
 //!     let mut dict = HashMap::new();
 //!     dict.insert("test".into(), "Minimal".into());
@@ -45,7 +45,7 @@
 //!     // copy the file into the working directory
 //!     let output = ::std::env::current_dir().unwrap().join("out.pdf");
 //!     assert!(write(output, result).is_ok());
-//! }
+//!
 //! ```
 //!
 
@@ -102,22 +102,19 @@ impl LatexInput {
     /// ## Example
     /// ```
     /// # use latexcompile::{LatexCompiler, LatexInput, LatexError};
-    /// fn main() {
+    /// 
     ///   let mut input = LatexInput::from("assets/main.tex");
     ///   input.add("name.tex", "test".as_bytes().to_vec());
-    /// }
+    ///
     /// ```
     ///
     /// ## Note
     /// If the path is not a file or can't be converted to a string nothing is added and ok is returned.
     pub fn add_file(&mut self, file: PathBuf) -> Result<()> {
         if file.is_file() {
-            match file.to_str() {
-                Some(name) => {
-                    let content = fs::read(&file).map_err(LatexError::Input)?;
-                    self.input.push((name.to_string(), content));
-                }
-                None => {}
+            if let Some(name) = file.to_str() {
+                let content = fs::read(&file).map_err(LatexError::Input)?;
+                self.input.push((name.to_string(), content));
             }
         }
         Ok(())
@@ -127,10 +124,10 @@ impl LatexInput {
     /// ## Example
     /// ```
     /// # use latexcompile::{LatexCompiler, LatexInput, LatexError};
-    /// fn main() {
+    /// 
     ///   let mut input = LatexInput::from("assets");
     ///   input.add("name.tex", "test".as_bytes().to_vec());
-    /// }
+    /// 
     /// ```
     /// ## Note
     /// If the path is not a folder nothing is added.
@@ -235,12 +232,12 @@ impl<'a> From<&'a str> for LatexInput {
 /// use std::collections::HashMap;
 /// use latexcompile::{LatexCompiler, LatexInput, LatexError};
 ///
-/// fn main() {
+/// 
 ///    let compiler = LatexCompiler::new(HashMap::new()).unwrap();
 ///    let input = LatexInput::from("assets");
 ///    let pdf = compiler.run("assets/main.tex", &input);
 ///    assert!(pdf.is_ok());
-/// }
+///
 /// ```
 pub struct LatexCompiler {
     pub working_dir: PathBuf,
@@ -255,7 +252,7 @@ impl LatexCompiler {
 
         Ok(LatexCompiler {
             working_dir: dir.path().to_path_buf(),
-            cmd: cmd,
+            cmd,
         })
     }
 
