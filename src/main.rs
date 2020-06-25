@@ -16,6 +16,7 @@ use std::env;
 use std::env::current_dir;
 use std::path::Path;
 use std::{thread, time};
+use process_file::FasterBeamerError;
 
 fn main() {
     if env::var("RUST_LOG").is_err() {
@@ -90,7 +91,7 @@ fn main() {
 
     info!("Processing {:?}.", input_file);
     let result = process_file::process_file(input_file, &matches);
-    if result == Err(process_file::FasterBeamerError::InputFileNotExistent) {
+    if result == Err(FasterBeamerError::InputFileNotExistent) || result == Err(FasterBeamerError::IoError) {
         std::process::exit(-1);
     };
 
