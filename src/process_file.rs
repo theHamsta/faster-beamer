@@ -9,7 +9,6 @@ use crate::parsing;
 use log::Level::Trace;
 
 use crate::latexcompile::{LatexCompiler, LatexInput, LatexRunOptions};
-use cachedir::CacheDirConfig;
 use clap::ArgMatches;
 use indicatif::ProgressBar;
 use rayon::prelude::*;
@@ -25,6 +24,7 @@ use std::vec::Vec;
 #[derive(PartialEq)]
 pub enum FasterBeamerError {
     InputFileNotExistent,
+    IoError,
     CompileError,
     PdfUniteError,
 }
@@ -157,10 +157,12 @@ pub fn process_file(input_file: &str, args: &ArgMatches) -> Result<()> {
     }
     .unwrap_or_else(|| r"\documentclass[aspectratio=43,c,xcolor=dvipsnames]{beamer}".to_string());
 
-    let cachedir: PathBuf = CacheDirConfig::new("faster-beamer")
-        .get_cache_dir()
-        .unwrap()
-        .into();
+    let cachedir = dirs::cache_dir().expect("This OS is not supported").join("faster-beamer");
+    std::fs::create_dir_all(&cachedir).map_err(|ref err| {
+        error!("Failed to create cache dir \"{}\": {}", cachedir.display(), err);
+        FasterBeamerError::IoError
+    })?;
+
     let cache_subdir = cachedir.join(format!(
         "./{}",
         &input_dir
