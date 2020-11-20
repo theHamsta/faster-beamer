@@ -373,9 +373,9 @@ dependencies = [
 
 [[package]]
 name = "hotwatch"
-version = "0.4.3"
+version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba0add391e9cd7d19c29024617a44df79c867ab003bce7f3224c1636595ec740"
+checksum = "75b9b80c041295b98b61c919caf04a6dbc9e1c132d938010600ce5689f4e224d"
 dependencies = [
  "log",
  "notify",
