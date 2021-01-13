@@ -26,7 +26,7 @@ symlink = "0.1.0"
 indicatif = "0.15.0"
 failure_derive = "0.1.8"
 failure = "0.1.8"
-tempfile = "3.1.0"
+tempfile = "3.2.0"
 
 [build-dependencies]
 cc = { version = "1.0.66", features = ["parallel"] }
